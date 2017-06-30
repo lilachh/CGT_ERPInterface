@@ -1,5 +1,4 @@
 ﻿using ERPInterface.Entities;
-using ERPInterface.Entities.InvCountJournal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,12 +21,14 @@ namespace ERPInterface
         [WebMethod]
         public string HelloWorld(string input)
         {
-            //Test4InvCountJournal_Export();
+            string ret = "Hello World";
+            //ret = Test4InvCountJournal_Export();
             //Test4InvCountJournal_Import(input);
-            return "Hello World";
+            ret = Test4InvMovementJournal_Export();
+            return ret;
         }
 
-        private void Test4InvCountJournal_Export()
+        private string Test4InvCountJournal_Export()
         {
             InvCountTable header = new InvCountTable();
             InvCountLine line = new InvCountLine();
@@ -48,12 +49,36 @@ namespace ERPInterface
             lst.Add(line);
             header.LstCountLine = lst;
             //string s = Utility.XmlSerializeToString(header);
-            string s = Utility.ObjectToJson(header);
+            return Utility.ObjectToJson(header);
         }
         private void Test4InvCountJournal_Import(string xml)
         {
             //InvCountTable header = (InvCountTable)Utility.XmlDeserializeFromString(xml, typeof(InvCountTable));
             InvCountTable header = (InvCountTable)Utility.JsonToObject(xml, new InvCountTable());
+        }
+
+        private string Test4InvMovementJournal_Export()
+        {
+            InvMovementTable header = new InvMovementTable();
+            InvMovementLine line = new InvMovementLine();
+            InventDim invDim = new InventDim();
+            //1
+            invDim.InventLocationId = "CHR";
+            invDim.inventBatchId = "S1064928";
+            invDim.inventSerialId = "JRN-126321";
+            invDim.wMsLocationId = "CTR1-IN";
+            invDim.wMSPallentId = "M1000001";
+            //2
+            line.ItemId = "010160500";
+            line.Qty = 123.45m;
+            line.InventDim = invDim;
+            //3
+            header.Description = "demo data for movement journal";
+            header.MovementType = "IMov";
+            List<InvMovementLine> lst = new List<InvMovementLine>();
+            lst.Add(line);
+            header.ListMovementLine = lst;
+            return Utility.ObjectToJson(header);
         }
     }
 }

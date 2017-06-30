@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace ERPInterface.Entities.SalesPackingSlip
+namespace ERPInterface.Entities
 {
     public class SalesTable
     {
