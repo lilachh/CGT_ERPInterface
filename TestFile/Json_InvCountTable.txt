@@ -1,0 +1,1 @@
+{"Description":"demo data for counting journal","LstCountLine":[{"InventDim":{"InventLocationId":"CHR","inventBatchId":"S1064928","inventSerialId":"JRN-126321","wMSPallentId":"M1000001","wMsLocationId":"CTR1-IN"},"ItemId":"010160500","Qty":123.45}]}

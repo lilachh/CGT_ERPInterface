@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-16"?>
+<InvCountTable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Description>demo data for counting journal</Description>
+  <LstCountLine>
+    <InvCountLine>
+      <ItemId>010160500</ItemId>
+      <Qty>123.45</Qty>
+      <InventDim>
+        <InventLocationId>CHR</InventLocationId>
+        <inventBatchId>S1064928</inventBatchId>
+        <wMsLocationId>CTR1-IN</wMsLocationId>
+        <wMSPallentId>M1000001</wMSPallentId>
+        <inventSerialId>JRN-126321</inventSerialId>
+      </InventDim>
+    </InvCountLine>
+  </LstCountLine>
+</InvCountTable>
