@@ -79,6 +79,7 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\AXClassEntity.cs" />
     <Compile Include="Entities\InvCountJournal\InvCountLine.cs" />
     <Compile Include="Entities\InvCountJournal\InvCountTable.cs" />
     <Compile Include="Entities\InventDim.cs" />
@@ -99,7 +100,20 @@
     </Compile>
     <Compile Include="Utility.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <COMReference Include="AxaptaCOMConnector">
+      <Guid>{80F444A0-46FF-11D2-8459-0008C7A0D1EA}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>2</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Manger\" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

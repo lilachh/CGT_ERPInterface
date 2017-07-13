@@ -1,4 +1,5 @@
-﻿using ERPInterface.Entities;
+﻿using AxaptaCOMConnector;
+using ERPInterface.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,18 +18,85 @@ namespace ERPInterface
     // [System.Web.Script.Services.ScriptService]
     public class Svc : System.Web.Services.WebService   
     {
+        [WebMethod]
+        public string PurchPackingSlip(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                // 1.0 get parameters
+                PurchTable pt = (PurchTable)Utility.XmlDeserializeFromString(input, typeof(PurchTable));
 
+                #region Log on 
+                ax.Logon();
+                ax.TTSBegin();
+                // 2.0 update purchline receive now
+                foreach (PurchLine pl in pt.LstPurchLine)
+                {
+                    InventDim dim = pl.InventDim;
+                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                    inventDim.field["InventLocationId"] = dim.InventLocationId;
+                    inventDim.field["inventBatchId"] = dim.inventBatchId;
+                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                    inventDim.field["inventSerialId"] = dim.inventSerialId;
+                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    string inventDimId = inventDim.field["inventDimId"];
+                    IAxaptaRecord axRecord = ax.CreateRecord("PurchLine");
+                    
+                    string stmt = string.Format(
+                        "select forupdate * from %1 where %1.PurchId =='{0}' && %1.LineNum == {1}"
+                        ,pt.PurchId,pl.LineNum);
+                    axRecord.ExecuteStmt(stmt);
+                    pl.InventTransId = axRecord.field["InventTransId"];
+                    axRecord.field["PurchReceivedNow"] = pl.Qty;
+                    axRecord.field["inventDimId"] = inventDimId;
+                    axRecord.Call("setInventReceivedNow");
+                    axRecord.DoUpdate();
+                }
+                ax.TTSCommit();
+                // 3.0 create packingslip parm
+                // DocumentStatus::PackingSlip = 5
+                IAxaptaObject purchFormLetter = 
+                    ax.CallStaticClassMethod("PurchFormLetter", "construct",5) as IAxaptaObject;
+                IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
+                purchTable.ExecuteStmt(string.Format(
+                        "select forupdate * from %1 where %1.PurchId =='{0}'"
+                        , pt.PurchId));
+                // 4.0 post packingslip
+                //PurchUpdate::ReceiveNow = 0
+                purchFormLetter.Call("update",purchTable,DateTime.Now.ToLongTimeString(), DateTime.Now,0);
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
+
+        #region Test
         [WebMethod]
         public string HelloWorld(string input)
         {
             string ret = "Hello World";
-            ret = Test4InvCountJournal_Export();
-            //Test4InvCountJournal_Import(input);
-            ret = Test4InvMovementJournal_Export();
-            ret = Test4InvTransferJournal_Export();
-            ret = Test4PurchPackingSlip_Export();
-            ret = Test4SalesCreditNote_Export();
-            ret = Test4SalesPackingSlip_Export();
+            //ret = Test4InvCountJournal_Export();
+            ////Test4InvCountJournal_Import(input);
+            //ret = Test4InvMovementJournal_Export();
+            //ret = Test4InvTransferJournal_Export();
+            //ret = Test4PurchPackingSlip_Export();
+            //ret = Test4SalesCreditNote_Export();
+            //ret = Test4SalesPackingSlip_Export();
+            //ret = AXClassEntity.FetchCustTable();
+
+            //Test PurchPackingSlip
+            ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
             return ret;
         }
 
@@ -42,7 +110,7 @@ namespace ERPInterface
             invDim.inventBatchId = "S1064928";
             invDim.inventSerialId = "JRN-126321";
             invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPallentId = "M1000001";
+            invDim.wMSPalletId = "M1000001";
             //2
             line.ItemId = "010160500";
             line.Qty = 123.45m;
@@ -71,7 +139,7 @@ namespace ERPInterface
             invDim.inventBatchId = "S1064928";
             invDim.inventSerialId = "JRN-126321";
             invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPallentId = "M1000001";
+            invDim.wMSPalletId = "M1000001";
             //2
             line.ItemId = "010160500";
             line.Qty = 123.45m;
@@ -95,7 +163,7 @@ namespace ERPInterface
             invDim.inventBatchId = "S1064928";
             invDim.inventSerialId = "JRN-126321";
             invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPallentId = "M1000001";
+            invDim.wMSPalletId = "M1000001";
             //2
             line.ItemId = "010160500";
             line.Qty = 123.45m;
@@ -118,14 +186,15 @@ namespace ERPInterface
             invDim.InventLocationId = "CHR";
             invDim.inventBatchId = "";
             invDim.inventSerialId = "";
-            invDim.wMsLocationId = "DOCK";
-            invDim.wMSPallentId = "";
+            invDim.wMsLocationId = "D11101";
+            invDim.wMSPalletId = "";
             //2
             line.ItemId = "RC061079";
-            line.Qty = 123.45m;
+            line.Qty = 2;
             line.InventDim = invDim;
+            line.LineNum = 1;
             //3
-            header.PurchId = "PP011985";
+            header.PurchId = "PP014800";
             header.Receive = true;
             List<PurchLine> lst = new List<PurchLine>();
             lst.Add(line);
@@ -143,7 +212,7 @@ namespace ERPInterface
             invDim.inventBatchId = "S1064928";
             invDim.inventSerialId = "JRN-126321";
             invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPallentId = "M1000001";
+            invDim.wMSPalletId = "M1000001";
             //2
             line.ItemId = "010160500";
             line.Qty = 123.45m;
@@ -166,7 +235,7 @@ namespace ERPInterface
             invDim.inventBatchId = "S1064928";
             invDim.inventSerialId = "JRN-126321";
             invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPallentId = "M1000001";
+            invDim.wMSPalletId = "M1000001";
             //2
             line.ItemId = "010160500";
             line.Qty = 123.45m;
@@ -178,5 +247,7 @@ namespace ERPInterface
             header.LstSalesLine = lst;
             return Utility.XmlSerializeToString(header);
         }
+        #endregion
+
     }
 }

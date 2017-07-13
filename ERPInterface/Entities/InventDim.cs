@@ -10,7 +10,7 @@ namespace ERPInterface.Entities
         public string InventLocationId { get; set; }
         public string inventBatchId { get; set; }
         public string wMsLocationId { get; set; }
-        public string wMSPallentId { get; set; }
+        public string wMSPalletId { get; set; }
         public string inventSerialId { get; set; }
     }
 }
