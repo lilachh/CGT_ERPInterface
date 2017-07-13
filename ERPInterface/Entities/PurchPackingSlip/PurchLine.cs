@@ -11,6 +11,5 @@ namespace ERPInterface.Entities
         public string ItemId { get; set; }
         public decimal Qty { get; set; }
         public InventDim InventDim { get; set; }
-        public string InventTransId { get; set; }
     }
 }

@@ -49,7 +49,6 @@ namespace ERPInterface
                         "select forupdate * from %1 where %1.PurchId =='{0}' && %1.LineNum == {1}"
                         ,pt.PurchId,pl.LineNum);
                     axRecord.ExecuteStmt(stmt);
-                    pl.InventTransId = axRecord.field["InventTransId"];
                     axRecord.field["PurchReceivedNow"] = pl.Qty;
                     axRecord.field["inventDimId"] = inventDimId;
                     axRecord.Call("setInventReceivedNow");
@@ -64,7 +63,7 @@ namespace ERPInterface
                 purchTable.ExecuteStmt(string.Format(
                         "select forupdate * from %1 where %1.PurchId =='{0}'"
                         , pt.PurchId));
-                // 4.0 post packingslip
+                // 4.0 post packingslip               
                 //PurchUpdate::ReceiveNow = 0
                 purchFormLetter.Call("update",purchTable,DateTime.Now.ToLongTimeString(), DateTime.Now,0);
                 #endregion
@@ -81,6 +80,47 @@ namespace ERPInterface
             return ret;
         }
 
+        [WebMethod]
+        public string SalesPackingSlip(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                SalesShipmentTable st = 
+                    (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
+                ax.Logon();
+                //1.0 WMSOrderTransReservation
+                foreach (SalesShipmentLine sl in st.LstShipmentLine)
+                {
+                    InventDim dim = sl.InventDim;
+                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                    inventDim.field["InventLocationId"] = dim.InventLocationId;
+                    inventDim.field["inventBatchId"] = dim.inventBatchId;
+                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                    inventDim.field["inventSerialId"] = dim.inventSerialId;
+                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    IAxaptaRecord WMSOrderTrans = ax.CreateRecord("WMSOrderTrans");
+                    WMSOrderTrans.ExecuteStmt(string.Format(
+                        "select * from %1 where %1.shipmentId =='{0}' && %1.orderId == '{1}'"
+                        ,st.ShipmentId,sl.InvOutPutOrder));
+                    ax.CallStaticClassMethod("WMS_Utility"
+                            , "Svc_WMSOrderTransReservation"
+                            , WMSOrderTrans.field["RecId"], inventDim.field["inventDimId"]);
+                }
+                //2.0 WMSShipmentFinished & SalesPackingSlip
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSShipmentFinished", st.ShipmentId);                
+            }
+            catch (Exception ex) {
+                ax.TTSAbort();
+                ret = ex.Message; }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
         #region Test
         [WebMethod]
         public string HelloWorld(string input)
@@ -96,7 +136,9 @@ namespace ERPInterface
             //ret = AXClassEntity.FetchCustTable();
 
             //Test PurchPackingSlip
-            ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
+            //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
+            //Test SalesPackingSlik
+            ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             return ret;
         }
 
@@ -144,6 +186,7 @@ namespace ERPInterface
             line.ItemId = "010160500";
             line.Qty = 123.45m;
             line.InventDim = invDim;
+        
             //3
             header.Description = "demo data for movement journal";
             header.MovementType = "IMov";
@@ -209,16 +252,17 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1064928";
-            invDim.inventSerialId = "JRN-126321";
-            invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPalletId = "M1000001";
+            invDim.inventBatchId = "";
+            invDim.inventSerialId = "CTN3109 Caprice DX9";
+            invDim.wMsLocationId = "G05139";
+            invDim.wMSPalletId = "";
             //2
-            line.ItemId = "010160500";
-            line.Qty = 123.45m;
+            line.ItemId = "040000500";
+            line.Qty = 2;
             line.InventDim = invDim;
+            line.InvOutPutOrder = "INO-030851";
             //3
-            header.ShipmentId = "SHP-011774";
+            header.ShipmentId = "SHP-014304";
             List<SalesShipmentLine> lst = new List<SalesShipmentLine>();
             lst.Add(line);
             header.LstShipmentLine = lst;
