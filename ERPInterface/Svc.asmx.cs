@@ -49,7 +49,7 @@ namespace ERPInterface
                         "select forupdate * from %1 where %1.PurchId =='{0}' && %1.LineNum == {1}"
                         ,pt.PurchId,pl.LineNum);
                     axRecord.ExecuteStmt(stmt);
-                    axRecord.field["PurchReceivedNow"] = pl.Qty;
+                    axRecord.field["PurchReceivedNow"] = pt.Receive ? pl.Qty : pl.Qty * -1;
                     axRecord.field["inventDimId"] = inventDimId;
                     axRecord.Call("setInventReceivedNow");
                     axRecord.DoUpdate();
@@ -81,13 +81,134 @@ namespace ERPInterface
         }
 
         [WebMethod]
+        public string InvTransferJournal(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                InvJournalTable jt = 
+                    (InvJournalTable)Utility.XmlDeserializeFromString(input, typeof(InvJournalTable));
+                ax.Logon();
+                //1.0 create header
+                IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName","find", "ITrf");
+                IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");
+                inventJournalTable.Call("initValue");
+                inventJournalTable.Call("initFromInventJournalName", inventJournalName);
+                inventJournalTable.field["Description"] = jt.Description;
+                inventJournalTable.Call("insert");
+                //2.0 add lines
+                foreach (InvJournalLine jl in jt.LstJournalLine)
+                {
+                    #region get invent dim
+                    InventDim dimF = jl.InventDimFrom;
+                    IAxaptaRecord inventDimF = ax.CreateRecord("InventDim");
+                    inventDimF.field["InventLocationId"] = dimF.InventLocationId;
+                    inventDimF.field["inventBatchId"] = dimF.inventBatchId;
+                    inventDimF.field["wMsLocationId"] = dimF.wMsLocationId;
+                    inventDimF.field["wMSPalletId"] = dimF.wMSPalletId;
+                    inventDimF.field["inventSerialId"] = dimF.inventSerialId;
+                    inventDimF = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimF);
+                    InventDim dimT = jl.InventDimTo;
+                    IAxaptaRecord inventDimT = ax.CreateRecord("InventDim");
+                    inventDimT.field["InventLocationId"] = dimT.InventLocationId;
+                    inventDimT.field["inventBatchId"] = dimT.inventBatchId;
+                    inventDimT.field["wMsLocationId"] = dimT.wMsLocationId;
+                    inventDimT.field["wMSPalletId"] = dimT.wMSPalletId;
+                    inventDimT.field["inventSerialId"] = dimT.inventSerialId;
+                    inventDimT = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimT);
+                    #endregion
+
+                    ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_InventoryJournal_AddLine"
+                        , inventJournalTable.field["JournalId"]
+                        , jl.ItemId, jl.Qty
+                        , inventDimF.field["inventDimId"]
+                        , inventDimT.field["inventDimId"]);
+                }
+                //3.0 post journal
+                ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_PostInventoryJournal"
+                        , inventJournalTable.field["JournalId"]);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
+        
+        [WebMethod]
+        public string InvMovementJournal(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                InvMovementTable jt =
+                  (InvMovementTable)Utility.XmlDeserializeFromString(input, typeof(InvMovementTable));
+                ax.Logon();
+                //1.0 create header
+                IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", jt.MovementType);
+                IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");
+                inventJournalTable.Call("initValue");
+                inventJournalTable.Call("initFromInventJournalName", inventJournalName);
+                inventJournalTable.field["Description"] = jt.Description;
+                inventJournalTable.Call("insert");
+                //2.0 add lines
+                foreach (InvMovementLine jl in jt.ListMovementLine)
+                {
+                    #region get invent dim
+                    InventDim dim = jl.InventDim;
+                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                    inventDim.field["InventLocationId"] = dim.InventLocationId;
+                    inventDim.field["inventBatchId"] = dim.inventBatchId;
+                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                    inventDim.field["inventSerialId"] = dim.inventSerialId;
+                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    #endregion
+                    ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_MovementJournal_AddLine"
+                        , inventJournalTable.field["JournalId"]
+                        , jl.ItemId, jl.Qty
+                        , inventDim.field["inventDimId"]
+                        , jl.OffsetAccount);
+                }
+                //3.0 post journal
+                ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_PostInventoryJournal"
+                        , inventJournalTable.field["JournalId"]);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
+        
+        [WebMethod]
         public string SalesPackingSlip(string input)
         {
             string ret = "";
             Axapta ax = new Axapta();
             try
             {
-                SalesShipmentTable st = 
+                SalesShipmentTable st =
                     (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
                 ax.Logon();
                 //1.0 WMSOrderTransReservation
@@ -104,23 +225,129 @@ namespace ERPInterface
                     IAxaptaRecord WMSOrderTrans = ax.CreateRecord("WMSOrderTrans");
                     WMSOrderTrans.ExecuteStmt(string.Format(
                         "select * from %1 where %1.shipmentId =='{0}' && %1.orderId == '{1}'"
-                        ,st.ShipmentId,sl.InvOutPutOrder));
+                        , st.ShipmentId, sl.InvOutPutOrder));
                     ax.CallStaticClassMethod("WMS_Utility"
                             , "Svc_WMSOrderTransReservation"
                             , WMSOrderTrans.field["RecId"], inventDim.field["inventDimId"]);
                 }
                 //2.0 WMSShipmentFinished & SalesPackingSlip
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSShipmentFinished", st.ShipmentId);                
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSShipmentFinished", st.ShipmentId);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 ax.TTSAbort();
-                ret = ex.Message; }
+                ret = ex.Message;
+            }
             finally
             {
                 ax.Logoff();
             }
             return ret;
         }
+        
+        [WebMethod]
+        public string SalesCreditNote(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                SalesTable st = 
+                    (SalesTable)Utility.XmlDeserializeFromString(input, typeof(SalesTable));
+                ax.Logon();
+                ax.TTSBegin();
+                foreach (SalesLine sl in st.LstSalesLine)
+                {
+                    InventDim dim = sl.InventDim;
+                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                    inventDim.field["InventLocationId"] = dim.InventLocationId;
+                    inventDim.field["inventBatchId"] = dim.inventBatchId;
+                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                    inventDim.field["inventSerialId"] = dim.inventSerialId;
+                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
+                    SalesLine.ExecuteStmt(string.Format(
+                        "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
+                        , st.SalesId, sl.LineNum));
+                    SalesLine.field["SalesDeliverNow"] = -1 * sl.Qty;
+                    SalesLine.field["inventDimId"] = inventDim.field["inventDimId"];
+                    SalesLine.Call("setInventDeliverNow");
+                    SalesLine.DoUpdate();
+                }
+                ax.TTSCommit();
+                // SalesUpdate::DeliverNow = 0
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
+
+
+        [WebMethod]
+        public string InvCountJournal(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                InvCountTable jt =
+                  (InvCountTable)Utility.XmlDeserializeFromString(input, typeof(InvCountTable));
+                ax.Logon();
+                //1.0 create header
+                IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", "ICnt");
+                IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");
+                inventJournalTable.Call("initValue");
+                inventJournalTable.Call("initFromInventJournalName", inventJournalName);
+                inventJournalTable.field["Description"] = jt.Description;
+                inventJournalTable.Call("insert");
+                //2.0 add lines
+                foreach (InvCountLine jl in jt.LstCountLine)
+                {
+                    #region get invent dim
+                    InventDim dim = jl.InventDim;
+                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                    inventDim.field["InventLocationId"] = dim.InventLocationId;
+                    inventDim.field["inventBatchId"] = dim.inventBatchId;
+                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                    inventDim.field["inventSerialId"] = dim.inventSerialId;
+                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    #endregion
+                    ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_CountingJournal_AddLine"
+                        , inventJournalTable.field["JournalId"]
+                        , jl.ItemId, jl.Qty
+                        , inventDim.field["inventDimId"]
+                        );
+                }
+                //3.0 post journal
+                ax.CallStaticClassMethod(
+                        "WMS_Utility"
+                        , "Svc_PostInventoryJournal"
+                        , inventJournalTable.field["JournalId"]);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return ret;
+        }
+
         #region Test
         [WebMethod]
         public string HelloWorld(string input)
@@ -138,7 +365,14 @@ namespace ERPInterface
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
             //Test SalesPackingSlik
-            ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
+            //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
+            //ret = SalesCreditNote(Test4SalesCreditNote_Export());
+            //Test InvTransferJournal
+            //ret = InvTransferJournal(Test4InvTransferJournal_Export());
+            //Test InvMovementJournal
+            //ret = InvMovementJournal(Test4InvMovementJournal_Export());
+            //Test InvCountJournal
+            ret = InvCountJournal(Test4InvCountJournal_Export());
             return ret;
         }
 
@@ -149,13 +383,13 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1064928";
-            invDim.inventSerialId = "JRN-126321";
-            invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPalletId = "M1000001";
+            invDim.inventBatchId = "";
+            invDim.inventSerialId = "";
+            invDim.wMsLocationId = "DOCK";
+            invDim.wMSPalletId = "";
             //2
-            line.ItemId = "010160500";
-            line.Qty = 123.45m;
+            line.ItemId = "RC010009";
+            line.Qty = 1m;
             line.InventDim = invDim;
             //3
             header.Description = "demo data for counting journal";
@@ -178,15 +412,15 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1064928";
-            invDim.inventSerialId = "JRN-126321";
-            invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPalletId = "M1000001";
+            invDim.inventBatchId = "";
+            invDim.inventSerialId = "";
+            invDim.wMsLocationId = "";
+            invDim.wMSPalletId = "";
             //2
-            line.ItemId = "010160500";
-            line.Qty = 123.45m;
+            line.ItemId = "M000658";
+            line.Qty = 4m;
             line.InventDim = invDim;
-        
+            line.OffsetAccount = "64030";
             //3
             header.Description = "demo data for movement journal";
             header.MovementType = "IMov";
@@ -200,18 +434,24 @@ namespace ERPInterface
         {
             InvJournalTable header = new InvJournalTable();
             InvJournalLine line = new InvJournalLine();
-            InventDim invDim = new InventDim();
             //1
-            invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1064928";
-            invDim.inventSerialId = "JRN-126321";
-            invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPalletId = "M1000001";
+            InventDim invDimF = new InventDim();
+            invDimF.InventLocationId = "CHR";
+            invDimF.inventBatchId = "";
+            invDimF.inventSerialId = "";
+            invDimF.wMsLocationId = "D16102";
+            invDimF.wMSPalletId = "";
             //2
-            line.ItemId = "010160500";
-            line.Qty = 123.45m;
-            line.InventDimFrom = invDim;
-            line.InventDimTo = invDim;
+            line.ItemId = "RC020027";
+            line.Qty = 1;
+            line.InventDimFrom = invDimF;
+            InventDim invDimT = new InventDim();
+            invDimT.InventLocationId = "CHR";
+            invDimT.inventBatchId = "";
+            invDimT.inventSerialId = "";
+            invDimT.wMsLocationId = "DOCK";
+            invDimT.wMSPalletId = "";
+            line.InventDimTo = invDimT;
             //3
             header.Description = "demo data for transfer journal";
             List<InvJournalLine> lst = new List<InvJournalLine>();
@@ -238,7 +478,7 @@ namespace ERPInterface
             line.LineNum = 1;
             //3
             header.PurchId = "PP014800";
-            header.Receive = true;
+            header.Receive = false;
             List<PurchLine> lst = new List<PurchLine>();
             lst.Add(line);
             header.LstPurchLine = lst;
@@ -276,16 +516,17 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1064928";
-            invDim.inventSerialId = "JRN-126321";
-            invDim.wMsLocationId = "CTR1-IN";
-            invDim.wMSPalletId = "M1000001";
+            invDim.inventBatchId = "";
+            invDim.inventSerialId = "CTN3109 Caprice DX9";
+            invDim.wMsLocationId = "G05139";
+            invDim.wMSPalletId = "";
             //2
-            line.ItemId = "010160500";
-            line.Qty = 123.45m;
+            line.ItemId = "040000500";
+            line.Qty = 1;
             line.InventDim = invDim;
+            line.LineNum = "1";
             //3
-            header.SalesId = "SO009430";
+            header.SalesId = "SO011158";
             List<SalesLine> lst = new List<SalesLine>();
             lst.Add(line);
             header.LstSalesLine = lst;
