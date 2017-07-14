@@ -1,0 +1,713 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Business Solutions-Axapta Job: Job5 unloaded at Friday 7/14/2017
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job5
+    #static void Job5(Args _args)
+    #{
+    #purchline   l_purchline;
+    #str l_a;
+    #WMSOrderTrans   l_trans;
+    #salesline   l_sl;
+    #;
+    #
+    #        /*
+    #          select forupdate * from l_purchline
+    #          where l_purchline.PurchId == 'PP014800'
+    #          && l_purchline.LineNum == 1;
+    #       l_a = "" ;
+    #          */
+    #
+    #       //select l_trans where l_trans.shipmentId=='' &&l_trans.orderId
+    #       WMS_Utility::Svc_SalesPackingSlip("SO011158",SalesUpdate::DeliverNow);
+    #}
+  ENDSOURCE
+
+***Element: JOB
+
+; Microsoft Business Solutions-Axapta Job: H_test unloaded at Friday 7/14/2017
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #H_test
+    #static void H_test(Args _args)
+    #{
+    #    WMSOrderTrans           l_wmsTrans;
+    #    InventDim               l_invDim;
+    #    WMSShipmentId           l_wmsShipmentId;
+    #    ;
+    #    //breakpoint;
+    #    //1.0 PO packing slip
+    #    //PP011963
+    #    //WMS_Utility::PurchPackingSlip("PP011975");
+    #    //2.0 Invent transfer
+    #    //WMS_Utility::PostInventoryJournal();
+    #    //3.0 Shipment
+    #    //WMS_Utility::SalesPackingSlip('SO009430');
+    #    l_wmsShipmentId = 'SHP-011774';
+    #    //3.1 WMSOrderTransReservation
+    #    while select l_wmsTrans
+    #    where l_wmsTrans.shipmentId == l_wmsShipmentId
+    #    && l_wmsTrans.expeditionStatus !=  WMSexpeditionStatus::Reserved
+    #    {
+    #        l_invDim =  WMS_Utility::FindDim('DDR','','DOCK','','F19302');
+    #        WMS_Utility::WMSOrderTransReservation(l_wmsTrans.RecId,InventDim::findDim(l_invDim));
+    #    }
+    #    //3.2 WMSShipmentFinished
+    #    WMS_Utility::WMSShipmentFinished(l_wmsShipmentId);
+    #    //3.3 SalesPackingSlip
+    #    while select SalesId from l_wmsTrans
+    #    group by SalesId
+    #    where l_wmsTrans.shipmentId == l_wmsShipmentId
+    #    {
+    #        WMS_Utility::SalesPackingSlip(l_wmsTrans.SalesId);
+    #    }
+    #
+    #}
+  ENDSOURCE
+
+***Element: CLS
+
+; Microsoft Business Solutions-Axapta Class: WMS_Utility unloaded at Friday 7/14/2017
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #WMS_Utility
+    PROPERTIES
+      Name                #WMS_Utility
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #Svc_CountingJournal_AddLine
+        #Public Static void Svc_CountingJournal_AddLine(
+        #    InventJournalId _journalId,ItemId _itemId ,Qty _qty
+        #    ,InventDimId _inventDimId)
+        #{
+        #    InventJournalName   l_jrlName;
+        #    InventJournalTable  l_jrlHeader;
+        #    InventJournalTrans  l_jrlLine;
+        #    InventTable         l_item;
+        #    InventDim           l_dimF,l_dimT;
+        #    InventJournalCheckPost  l_post;
+        #    ;
+        #    ttsbegin;
+        #    // 1.0 header
+        #    l_jrlHeader = InventJournalTable::find(_journalId,true);
+        #    // 2.0 line
+        #    // 2.1 item
+        #    l_jrlLine.clear();
+        #    l_jrlLine.initValue();
+        #    l_jrlLine.initFromInventJournalTable(l_jrlHeader);
+        #    l_jrlLine.ItemId = _itemId;
+        #    l_jrlLine.TransDate = systemDateGet();
+        #    l_item = InventTable::find(l_jrlLine.ItemId);
+        #    l_jrlLine.initFromInventTable(l_item);
+        #    l_jrlLine.Counted = _qty;
+        #    l_jrlLine.CostAmount = l_jrlLine.Qty * l_jrlLine.PriceUnit;
+        #    // 2.2 dim
+        #    l_jrlLine.InventDimId = _inventDimId;
+        #    l_jrlLine.insert();
+        #    // 3.0 count journal lines
+        #    InventJournalTable::initTotal(l_jrlHeader);
+        #    l_jrlHeader.update();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #Svc_MovementJournal_AddLine
+        #Public Static void Svc_MovementJournal_AddLine(
+        #    InventJournalId _journalId,ItemId _itemId ,Qty _qty
+        #    ,InventDimId _inventDimId
+        #    ,str 10 _ledgerAccountIdOffset)
+        #{
+        #    InventJournalName   l_jrlName;
+        #    InventJournalTable  l_jrlHeader;
+        #    InventJournalTrans  l_jrlLine;
+        #    InventTable         l_item;
+        #    InventDim           l_dimF,l_dimT;
+        #    InventJournalCheckPost  l_post;
+        #    ;
+        #    ttsbegin;
+        #    // 1.0 header
+        #    l_jrlHeader = InventJournalTable::find(_journalId,true);
+        #    // 2.0 line
+        #    // 2.1 item
+        #    l_jrlLine.clear();
+        #    l_jrlLine.initValue();
+        #    l_jrlLine.initFromInventJournalTable(l_jrlHeader);
+        #    l_jrlLine.ItemId = _itemId;
+        #    l_jrlLine.TransDate = systemDateGet();
+        #    l_item = InventTable::find(l_jrlLine.ItemId);
+        #    l_jrlLine.initFromInventTable(l_item);
+        #    l_jrlLine.Qty = _qty;
+        #    l_jrlLine.CostAmount = l_jrlLine.Qty * l_jrlLine.PriceUnit;
+        #    // 2.2 dim
+        #    l_jrlLine.InventDimId = _inventDimId;
+        #    l_jrlLine.LedgerAccountIdOffset = _ledgerAccountIdOffset;
+        #    l_jrlLine.insert();
+        #    // 3.0 count journal lines
+        #    InventJournalTable::initTotal(l_jrlHeader);
+        #    l_jrlHeader.update();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #Svc_PostInventoryJournal
+        #Public Static void Svc_PostInventoryJournal(InventJournalId _journalId)
+        #{
+        #    InventJournalTable  l_jrlHeader;
+        #    InventJournalCheckPost  l_post;
+        #    ;
+        #
+        #    l_jrlHeader = InventJournalTable::find(_journalId);
+        #    l_post = InventJournalCheckPost::newPostJournal(l_jrlHeader);
+        #    l_post.parmShowInfoResult(false);
+        #    l_post.parmThrowCheckFailed(true);
+        #    l_post.parmTransferErrors(false);
+        #    l_post.run();
+        #}
+      ENDSOURCE
+      SOURCE #Svc_InventoryJournal_AddLine
+        #Public Static void Svc_InventoryJournal_AddLine(
+        #    InventJournalId _journalId,ItemId _itemId ,Qty _qty
+        #    ,InventDimId _inventDimIdF
+        #    ,InventDimId _inventDimIdT)
+        #{
+        #    InventJournalName   l_jrlName;
+        #    InventJournalTable  l_jrlHeader;
+        #    InventJournalTrans  l_jrlLine;
+        #    InventTable         l_item;
+        #    InventDim           l_dimF,l_dimT;
+        #    InventJournalCheckPost  l_post;
+        #    ;
+        #    ttsbegin;
+        #    // 1.0 header
+        #    l_jrlHeader = InventJournalTable::find(_journalId,true);
+        #    // 2.0 line
+        #    // 2.1 item
+        #    l_jrlLine.clear();
+        #    l_jrlLine.initValue();
+        #    l_jrlLine.initFromInventJournalTable(l_jrlHeader);
+        #    l_jrlLine.ItemId = _itemId;
+        #    l_jrlLine.TransDate = systemDateGet();
+        #    l_item = InventTable::find(l_jrlLine.ItemId);
+        #    l_jrlLine.initFromInventTable(l_item);
+        #    l_jrlLine.Qty = -1 * _qty;
+        #    l_jrlLine.CostAmount = l_jrlLine.Qty * l_jrlLine.PriceUnit;
+        #    // 2.2 dim
+        #    l_jrlLine.InventDimId = _inventDimIdF;
+        #    l_jrlLine.toInventDimId = _inventDimIdT;
+        #    l_jrlLine.insert();
+        #    // 3.0 count journal lines
+        #    InventJournalTable::initTotal(l_jrlHeader);
+        #    l_jrlHeader.update();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #Svc_SalesPackingSlip
+        #public static void Svc_SalesPackingSlip(SalesId _salesId,SalesUpdate _salesUpdate)
+        #{
+        #     SalesFormLetter_PackingSlip     l_formLetter;
+        #     l_formLetter = SalesFormLetter::construct(DocumentStatus::PackingSlip);
+        #     l_formLetter.update(SalesTable::find(_salesId)
+        #            ,systemDateGet()
+        #            ,_salesUpdate);
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #class WMS_Utility
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #postPackingSlipForShipment
+        #void postPackingSlipForShipment()
+        #{
+        #    SalesFormLetter salesFormLetter;
+        #    Set             shipmentsToPostSet = new Set(Types::String);
+        #    ;
+        #
+        #    //shipmentsToPostSet.add(wmsShipmentCreated.shipmentId);
+        #
+        #    salesFormLetter = SalesFormLetter::construct(DocumentStatus::PackingSlip);
+        #    //salesFormLetter.parmLibMkdShipmentId(this.parmLIBMKDShipmentSignOffLine().ShipmentId);
+        #    //salesFormLetter.parmWmsShipmentIdSet(shipmentsToPostSet);
+        #    //salesFormLetter.update(wmsShipmentCreated, systemDateGet(), SalesUpdate::PickingList, AccountOrder::Account);
+        #}
+      ENDSOURCE
+      SOURCE #BC_PurchPackingSlip
+        #public static void BC_PurchPackingSlip()
+        #{
+        #    PurchFormLetter     l_formLetter;
+        #    PurchTable          l_purchTable;
+        #    Num                 l_number; // packing slip number
+        #    Random              l_random = new Random();
+        #    PurchLine           l_line,l_purchLine;
+        #    PurchParmLine       l_purchParmLine;
+        #    PurchParmUpdate     l_purchParmUpdate;
+        #    PurchId             _purchId;
+        #    InventDim           l_dim;
+        #    l_purchTable = PurchTable::find(_purchId);
+        #    //prepare purchase line
+        #    while select l_line
+        #    where l_line.PurchId == l_purchTable.PurchId
+        #    && l_line.LineNum == 1.2
+        #    {
+        #        ttsbegin;
+        #        l_purchLine = purchline::find(l_line.PurchId,l_line.LineNum,true);
+        #        l_purchLine.PurchReceivedNow = 18.11;
+        #        l_purchLine.setInventReceivedNow();
+        #        l_purchLine.doUpdate();
+        #        ttscommit;
+        #    }
+        #    l_formLetter =  PurchFormLetter::construct(DocumentStatus::PackingSlip);
+        #    l_random.nextInt();
+        #    l_number = strfmt("HTest%1",l_random.nextInt() * 1234);
+        #    l_purchParmUpdate = l_formLetter.purchParmUpdate();
+        #    l_dim = InventDim::findOrCreate(l_dim);
+        #    l_purchParmLine = PurchParmLine::findInventTransId(l_purchParmUpdate.ParmId,l_purchLine.InventRefTransId,true);
+        #    l_formLetter.update( l_purchTable
+        #        ,l_number
+        #        ,l_formLetter.transDate()
+        #        ,PurchUpdate::ReceiveNow);
+        #}
+      ENDSOURCE
+      SOURCE #FindDim
+        #public static InventDim FindDim(str _wh,str _batch,str _location,str _pallet,str _serial)
+        #{
+        #    InventDim   l_dim,l_ret;
+        #    l_dim.clear();
+        #    l_dim.InventLocationId = _wh;
+        #    l_dim.inventBatchId = _batch;
+        #    l_dim.wMSLocationId = _location;
+        #    l_dim.wMSPalletId = _pallet;
+        #    l_dim.inventSerialId = _serial;
+        #    l_ret = InventDim::findDim(l_dim);
+        #    return l_ret;
+        #}
+      ENDSOURCE
+      SOURCE #my_testPosting
+        #static void my_testPosting(Args _args)
+        #{
+        #    SalesFormLetter salesFormLetter;
+        #    WMSShipment shipment;
+        #    WMSShipmentId shipmentId = '008431_113';
+        #    ;
+        #
+        #    //salesFormLetter = SalesFormLetter_PackingSlip::newPackingSlip();
+        #    salesFormLetter.allowEmptyTable(salesFormLetter.initAllowEmptyTable(true));
+        #    salesFormLetter.multiForm(true);
+        #    salesFormLetter.getLast();
+        #    shipment = WMSShipment::find(shipmentId);
+        #    SalesFormletter.update(shipment, systemDateGet(), SalesUpdate::PickingList, AccountOrder::None, false, true);
+        #}
+      ENDSOURCE
+      SOURCE #PostInventoryJournal
+        #Public Static void PostInventoryJournal()
+        #{
+        #    InventJournalName   l_jrlName;
+        #    InventJournalTable  l_jrlHeader;
+        #    InventJournalTrans  l_jrlLine;
+        #    InventTable         l_item;
+        #    InventDim           l_dimF,l_dimT;
+        #    InventJournalCheckPost  l_post;
+        #    ;
+        #    // 1.0 header
+        #    l_jrlHeader.clear();
+        #    l_jrlHeader.initValue();
+        #    l_jrlName = InventJournalName::find("ITrf");
+        #    l_jrlHeader.initFromInventJournalName(l_jrlName);
+        #    l_jrlHeader.Description = "HTest";
+        #    l_jrlHeader.insert();
+        #
+        #    // 2.0 line
+        #    // 2.1 item
+        #    l_jrlLine.clear();
+        #    l_jrlLine.initValue();
+        #    l_jrlLine.initFromInventJournalTable(l_jrlHeader);
+        #    l_jrlLine.ItemId = "005920100";
+        #    l_jrlLine.TransDate = systemDateGet();
+        #    l_item = InventTable::find(l_jrlLine.ItemId);
+        #    l_jrlLine.initFromInventTable(l_item);
+        #    l_jrlLine.Qty = -100;
+        #    l_jrlLine.CostAmount = l_jrlLine.Qty * l_jrlLine.PriceUnit;
+        #    // 2.2 dim
+        #    l_dimF.clear();
+        #    l_dimF.InventLocationId = "CHR";
+        #    l_dimF.wMSLocationId = "G03405";
+        #    l_dimF.inventBatchId = "";
+        #    l_dimF.inventSerialId = "F19302";
+        #    l_dimF.wMSPalletId = "";
+        #    l_dimF = InventDim::findOrCreate(l_dimF);
+        #    l_jrlLine.InventDimId = l_dimF.inventDimId;
+        #    l_dimT.clear();
+        #    l_dimT.InventLocationId = "DDR";
+        #    l_dimT.wMSLocationId = "DOCK";
+        #    l_dimT.inventBatchId = "";
+        #    l_dimT.inventSerialId = "F19302";
+        #    l_dimT.wMSPalletId = "";
+        #    l_dimT = InventDim::findOrCreate(l_dimT);
+        #    l_jrlLine.toInventDimId = l_dimT.inventDimId;
+        #    l_jrlLine.insert();
+        #    // 3.0 count journal lines
+        #    ttsbegin;
+        #    l_jrlHeader = InventJournalTable::find(l_jrlHeader.JournalId,true);
+        #    InventJournalTable::initTotal(l_jrlHeader);
+        #    l_jrlHeader.update();
+        #    ttscommit;
+        #    // 4.0 post journal
+        #    l_post = InventJournalCheckPost::newPostJournal(l_jrlHeader);
+        #    l_post.parmShowInfoResult(false);
+        #    l_post.parmThrowCheckFailed(true);
+        #    l_post.parmTransferErrors(false);
+        #    l_post.run();
+        #}
+      ENDSOURCE
+      SOURCE #PurchPackingSlip
+        #public static void PurchPackingSlip(PurchIdBase _purchId)
+        #{
+        #    PurchFormLetter     l_formLetter;
+        #    PurchTable          l_purchTable;
+        #    Num                 l_number; // packing slip number
+        #    Random              l_random = new Random();
+        #    PurchLine           l_line,l_purchLine;
+        #    PurchParmLine       l_purchParmLine;
+        #    PurchParmUpdate     l_purchParmUpdate;
+        #    ;
+        #    l_purchTable = PurchTable::find(_purchId);
+        #    //prepare purchase line
+        #    while select l_line
+        #    where l_line.PurchId == l_purchTable.PurchId
+        #    {
+        #        ttsbegin;
+        #        l_purchLine = purchline::find(l_line.PurchId,l_line.LineNum,true);
+        #        l_purchLine.PurchReceivedNow = 18.11;
+        #        l_purchLine.setInventReceivedNow();
+        #        l_purchLine.doUpdate();
+        #        ttscommit;
+        #    }
+        #    l_formLetter =  PurchFormLetter::construct(DocumentStatus::PackingSlip);
+        #    l_random.nextInt();
+        #    l_number = strfmt("HTest%1",l_random.nextInt() * 1234);
+        #    l_purchParmUpdate = l_formLetter.purchParmUpdate();
+        #    l_purchParmLine = PurchParmLine::findInventTransId(l_purchParmUpdate.ParmId,l_purchLine.InventRefTransId,true);
+        #    l_formLetter.update( l_purchTable
+        #        ,l_number
+        #        ,l_formLetter.transDate()
+        #        ,PurchUpdate::ReceiveNow);
+        #}
+      ENDSOURCE
+      SOURCE #ReserveByInvTrans
+        #public static void ReserveByInvTrans(recid _invRecId,Qty _qty,InventDim _dim)
+        #{
+        #    InventTrans             inventTrans;
+        #    InventMovement          inventMovement;
+        #    InventUpd_Reservation   inventUpd_Reservation ;
+        #
+        #    // Reserve an item
+        #    select inventTrans
+        #    where  inventTrans.RecId == _invRecId;
+        #
+        #    if(inventTrans.RecId)
+        #    {
+        #        inventMovement = inventTrans.inventmovement(true);
+        #        inventUpd_Reservation =
+        #            InventUpd_Reservation::newInventDim(
+        #                inventmovement
+        #                ,_dim
+        #                ,-1 * _qty
+        #                );
+        #        inventUpd_Reservation.updatenow();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #SalesPackingSlip
+        #public static void SalesPackingSlip(SalesId _salesId)
+        #{
+        #     SalesFormLetter_PackingSlip     l_formLetter;
+        #     l_formLetter = SalesFormLetter::construct(DocumentStatus::PackingSlip);
+        #     l_formLetter.update(SalesTable::find(_salesId)
+        #            ,systemDateGet()
+        #            ,SalesUpdate::PickingList);
+        #}
+      ENDSOURCE
+      SOURCE #SalesPackingSlip_all
+        #public static void SalesPackingSlip_all(WMSShipmentId _shipId)
+        #{
+        #    InventDim   l_invDim;
+        #    InventTrans l_invTrans;
+        #    WMSOrderTrans   l_shipLine,l_wmsTrans;
+        #    InventMovement          inventMovement;
+        #    InventUpd_Reservation   inventUpd_Reservation ;
+        #
+        #    WMSShipmentReservation  l_shipRes;
+        #    WMSShipment             l_WMSShipment;
+        #    WMSPickingRoute         l_WMSPickingRoute;
+        #
+        #    SalesFormLetter_PackingSlip     l_formLetter;
+        #    ;
+        #
+        #    ttsbegin;
+        #    // 1.0 shipment line reserve
+        #    l_WMSShipment   =    WMSShipment::find(_shipId,true);
+        #    l_invDim = WMS_Utility::FindDim('DDR','','DOCK','','F19302');
+        #
+        #
+        #    while select forupdate l_shipLine
+        #    where l_shipLine.shipmentId == _shipId
+        #    && l_shipLine.expeditionStatus ==  WMSexpeditionStatus::Registered
+        #    {
+        #        inventMovement = l_shipLine.inventMovement(true);
+        #        inventUpd_Reservation =
+        #            InventUpd_Reservation::newInventDim(
+        #                inventmovement
+        #                ,l_invDim
+        #                ,-1 * l_shipLine.qty
+        #                );
+        #        inventUpd_Reservation.updatenow();
+        #        l_shipLine.expeditionStatus =  WMSexpeditionStatus::Reserved;
+        #        l_shipLine.WMSOrder().addInventTransReservations(l_WMSShipment,l_shipLine.qty);
+        #        l_shipLine.update();
+        #        l_shipLine.delete();
+        #    }
+        #    if (l_WMSShipment.status == WMSShipmentStatus::Registered)
+        #            l_WMSShipment.reserve();
+        #
+        #    if (l_WMSShipment.palletExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_WMSShipment.activatePallets();
+        #
+        #    if (l_WMSShipment.pickExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_WMSShipment.activatePick();
+        #    //2.0 shipment header reserve
+        #    //l_WMSShipment.reserve();
+        #    //l_shipRes = WMSShipmentReservation::construct();
+        #    //l_shipRes.parmWMSShipmentId(_shipId);
+        #    //l_shipRes.run();
+        #    //3.0 shipment header active
+        #    //l_WMSShipment
+        # /*   args.record(l_shipLine.WMSShipment());
+        #    menuFunction = new MenuFunction(menuitemActionStr('WMSShipmentReservation'), MenuItemType::Action);
+        #    if (menuFunction)
+        #    {
+        #       menuFunction.run(args);
+        #    }
+        #    */
+        #    //4.0 Post Picking list
+        #    select firstonly forupdate l_WMSPickingRoute
+        #    where l_WMSPickingRoute.shipmentId == l_WMSShipment.shipmentId
+        #    ;
+        #
+        #    l_WMSPickingRoute.start();
+        #    l_WMSPickingRoute.finish();
+        #    ttscommit;
+        #
+        #    //5.0 Post packing slip
+        #    l_formLetter = SalesFormLetter::construct(DocumentStatus::PackingSlip);
+        #    while select l_wmsTrans
+        #    where l_wmsTrans.shipmentId == l_WMSShipment.shipmentId
+        #    {
+        #        l_formLetter.update(SalesTable::find(l_wmsTrans.SalesId)
+        #            ,systemDateGet()
+        #            ,SalesUpdate::PickingList);
+        #    }
+        #//    l_WMSPickingRoute.
+        #
+        #}
+      ENDSOURCE
+      SOURCE #Svc_WMSOrderTransReservation
+        #public static void Svc_WMSOrderTransReservation(RecId _transRecId
+        #                                            , InventDimId _invDimId)
+        #{
+        #    InventTrans             l_invTrans;
+        #    WMSOrderTrans           l_wmsTrans;
+        #    InventMovement          l_inventMovement;
+        #    InventUpd_Reservation   l_inventUpd_Reservation ;
+        #    InventDim               l_invDim;
+        #    ;
+        #    l_invDim = InventDim::find(_invDimId);
+        #
+        #    ttsbegin;
+        #    select firstonly forupdate l_wmsTrans
+        #    where l_wmsTrans.RecId ==  _transRecId
+        #    ;
+        #    if(l_wmsTrans.expeditionStatus ==  WMSexpeditionStatus::Reserved)
+        #    {
+        #        return;
+        #    }
+        #    l_inventMovement = l_wmsTrans.inventMovement(true);
+        #    l_inventUpd_Reservation =
+        #        InventUpd_Reservation::newInventDim(
+        #                    l_inventMovement
+        #                    ,l_invDim
+        #                    ,l_wmsTrans.qty * -1
+        #                );
+        #    l_inventUpd_Reservation.updatenow();
+        #    l_wmsTrans.expeditionStatus =  WMSexpeditionStatus::Reserved;
+        #    l_wmsTrans.WMSOrder().addInventTransReservations(
+        #        WMSShipment::find(l_wmsTrans.shipmentId)
+        #        ,l_wmsTrans.qty);
+        #    l_wmsTrans.update();
+        #    l_wmsTrans.delete();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #Svc_WMSShipmentFinished
+        #public static void Svc_WMSShipmentFinished(WMSShipmentId _wmsShipmentId)
+        #{
+        #    WMSShipment             l_wmsShipment;
+        #    WMSPickingRoute         l_WMSPickingRoute;
+        #    WMSOrderTrans           l_wmsTrans;
+        #    ;
+        #    ttsbegin;
+        #    //1.0 WMSShipmentReservation
+        #    l_wmsShipment = WMSShipment::find(_wmsShipmentId,true);
+        #    if (l_wmsShipment.status == WMSShipmentStatus::Registered)
+        #            l_wmsShipment.reserve();
+        #
+        #    if (l_wmsShipment.palletExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_wmsShipment.activatePallets();
+        #
+        #    if (l_wmsShipment.pickExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_wmsShipment.activatePick();
+        #    //2.0 Post picking list
+        #    select firstonly forupdate l_WMSPickingRoute
+        #    where l_WMSPickingRoute.shipmentId == l_WMSShipment.shipmentId
+        #    ;
+        #
+        #    l_WMSPickingRoute.start();
+        #    l_WMSPickingRoute.finish();
+        #
+        #    ttscommit;
+        #
+        #    //3.0 SalesPackingSlip
+        #    while select SalesId from l_wmsTrans
+        #    group by SalesId
+        #    where l_wmsTrans.shipmentId == _wmsShipmentId
+        #    {
+        #        WMS_Utility::Svc_SalesPackingSlip(l_wmsTrans.SalesId,SalesUpdate::PickingList);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #WMSOrderTransReservation
+        #public static void WMSOrderTransReservation(RecId _transRecId
+        #                                            , InventDim _invDim)
+        #{
+        #    InventTrans             l_invTrans;
+        #    WMSOrderTrans           l_wmsTrans;
+        #    InventMovement          l_inventMovement;
+        #    InventUpd_Reservation   l_inventUpd_Reservation ;
+        #
+        #    ttsbegin;
+        #    select firstonly forupdate l_wmsTrans
+        #    where l_wmsTrans.RecId ==  _transRecId
+        #    ;
+        #    l_inventMovement = l_wmsTrans.inventMovement(true);
+        #    l_inventUpd_Reservation =
+        #        InventUpd_Reservation::newInventDim(
+        #                    l_inventMovement
+        #                    ,_invDim
+        #                    ,l_wmsTrans.qty * -1
+        #                );
+        #    l_inventUpd_Reservation.updatenow();
+        #    l_wmsTrans.expeditionStatus =  WMSexpeditionStatus::Reserved;
+        #    l_wmsTrans.WMSOrder().addInventTransReservations(
+        #        WMSShipment::find(l_wmsTrans.shipmentId)
+        #        ,l_wmsTrans.qty);
+        #    l_wmsTrans.update();
+        #    l_wmsTrans.delete();
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #WMSShipmentFinished
+        #public static void WMSShipmentFinished(WMSShipmentId _wmsShipmentId)
+        #{
+        #    WMSShipment             l_wmsShipment;
+        #    WMSPickingRoute         l_WMSPickingRoute;
+        #    ;
+        #    ttsbegin;
+        #    //1.0 WMSShipmentReservation
+        #    l_wmsShipment = WMSShipment::find(_wmsShipmentId,true);
+        #    if (l_wmsShipment.status == WMSShipmentStatus::Registered)
+        #            l_wmsShipment.reserve();
+        #
+        #    if (l_wmsShipment.palletExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_wmsShipment.activatePallets();
+        #
+        #    if (l_wmsShipment.pickExpeditionStatus <= WMSExpeditionStatus::Registered)
+        #        l_wmsShipment.activatePick();
+        #    //2.0 Post picking list
+        #    select firstonly forupdate l_WMSPickingRoute
+        #    where l_WMSPickingRoute.shipmentId == l_WMSShipment.shipmentId
+        #    ;
+        #
+        #    l_WMSPickingRoute.start();
+        #    l_WMSPickingRoute.finish();
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: PRN
+
+; Microsoft Business Solutions-Axapta Project : H_Test unloaded at Friday 7/14/2017
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #H_Test
+   PRIVATE
+  PROPERTIES
+    Name                #H_Test
+  ENDPROPERTIES
+  
+    GROUP #Jobs
+      PROPERTIES
+        Name                #Jobs
+        ProjectGroupType    #Jobs
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Job5
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #H_test
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 50038
+        NODETYPE 329
+        NAME #WMS_Utility
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END
