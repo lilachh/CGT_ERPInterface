@@ -18,8 +18,7 @@ namespace ERPInterface
     // [System.Web.Script.Services.ScriptService]
     public class Svc : System.Web.Services.WebService   
     {
-        [WebMethod]
-        public string PurchPackingSlip(string input)
+        public string PurchCreditNote(string input)
         {
             string ret = "";
             Axapta ax = new Axapta();
@@ -78,6 +77,64 @@ namespace ERPInterface
                 ax.Logoff();
             }
             return ret;
+        }
+
+        [WebMethod]
+        public string PurchPackingSlip(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                // 1.0 get parameters
+                PurchTable pt = (PurchTable)Utility.XmlDeserializeFromString(input, typeof(PurchTable));
+                if (pt.Receive)
+                {
+                    #region Log on 
+                    ax.Logon();
+                    // 2.0 update purchline registered
+                    foreach (PurchLine pl in pt.LstPurchLine)
+                    {
+                        InventDim dim = pl.InventDim;
+                        IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                        inventDim.field["InventLocationId"] = dim.InventLocationId;
+                        inventDim.field["inventBatchId"] = dim.inventBatchId;
+                        inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                        inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                        inventDim.field["inventSerialId"] = dim.inventSerialId;
+                        inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                        string inventDimId = inventDim.field["inventDimId"];
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
+                            , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
+                    }
+                    // 3.0 create packingslip parm
+                    // DocumentStatus::PackingSlip = 5
+                    IAxaptaObject purchFormLetter =
+                        ax.CallStaticClassMethod("PurchFormLetter", "construct", 5) as IAxaptaObject;
+                    IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
+                    purchTable.ExecuteStmt(string.Format(
+                            "select forupdate * from %1 where %1.PurchId =='{0}'"
+                            , pt.PurchId));
+                    // 4.0 post packingslip               
+                    //PurchUpdate::Recorded = 2
+                    purchFormLetter.Call("update", purchTable, DateTime.Now.ToLongTimeString(), DateTime.Now, 2);
+                    #endregion
+                }
+                else
+                {
+                    ret = PurchCreditNote(input);
+                }
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return Utility.XmlResult(ret);
         }
 
         [WebMethod]
@@ -142,7 +199,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
         
         [WebMethod]
@@ -198,7 +255,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
         
         [WebMethod]
@@ -242,7 +299,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
         
         [WebMethod]
@@ -288,7 +345,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
 
 
@@ -345,7 +402,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
 
         #region Test
@@ -372,7 +429,8 @@ namespace ERPInterface
             //Test InvMovementJournal
             //ret = InvMovementJournal(Test4InvMovementJournal_Export());
             //Test InvCountJournal
-            ret = InvCountJournal(Test4InvCountJournal_Export());
+            //ret = InvCountJournal(Test4InvCountJournal_Export());
+            ret = Utility.XmlResult(input);
             return ret;
         }
 
@@ -466,21 +524,33 @@ namespace ERPInterface
             PurchLine line = new PurchLine();
             InventDim invDim = new InventDim();
             //1
-            invDim.InventLocationId = "CHR";
+            invDim.InventLocationId = "MRO-P";
             invDim.inventBatchId = "";
             invDim.inventSerialId = "";
-            invDim.wMsLocationId = "D11101";
+            invDim.wMsLocationId = "MRO-P2";
             invDim.wMSPalletId = "";
             //2
-            line.ItemId = "RC061079";
+            line.ItemId = "MPM00066";
             line.Qty = 2;
             line.InventDim = invDim;
             line.LineNum = 1;
             //3
-            header.PurchId = "PP014800";
+            header.PurchId = "PP014807";
             header.Receive = false;
             List<PurchLine> lst = new List<PurchLine>();
             lst.Add(line);
+            InventDim invDim2 = new InventDim();
+            invDim2.InventLocationId = "MRO-P";
+            invDim2.inventBatchId = "";
+            invDim2.inventSerialId = "";
+            invDim2.wMsLocationId = "MRO-P1";
+            invDim2.wMSPalletId = "";
+            PurchLine line2 = new PurchLine();
+            line2.ItemId = "MPM00066";
+            line2.Qty = 2;
+            line2.LineNum = 1;
+            line2.InventDim = invDim2;
+            lst.Add(line2);
             header.LstPurchLine = lst;
             return Utility.XmlSerializeToString(header);
         }

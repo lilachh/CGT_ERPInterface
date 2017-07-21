@@ -47,11 +47,26 @@ namespace ERPInterface
             stream.Read(dataBytes, 0, (int)stream.Length);
             return Encoding.UTF8.GetString(dataBytes);
         }
+
         public static object JsonToObject(string jsonString, object obj)
         {
             DataContractJsonSerializer serializer = new DataContractJsonSerializer(obj.GetType());
             MemoryStream mStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
             return serializer.ReadObject(mStream);
         }
+
+        public static string XmlResult(string ret)
+        {
+            Result result = new Result();
+            result.successful = ret == "";
+            result.erroMsg = ret;
+            return Utility.XmlSerializeToString(result);
+        }
+    }
+
+    public class Result
+    {
+        public bool successful { get; set; }
+        public string erroMsg { get; set; }
     }
 }
