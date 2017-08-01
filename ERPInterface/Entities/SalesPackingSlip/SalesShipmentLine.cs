@@ -12,4 +12,5 @@ namespace ERPInterface.Entities
         public decimal Qty { get; set; }
         public InventDim InventDim { get; set; }
     }
+    
 }

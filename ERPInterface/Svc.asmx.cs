@@ -104,6 +104,8 @@ namespace ERPInterface
                         inventDim.field["inventSerialId"] = dim.inventSerialId;
                         inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                         string inventDimId = inventDim.field["inventDimId"];
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                            ,pl.ItemId, inventDimId);
                         ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
                             , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
                     }
@@ -166,6 +168,11 @@ namespace ERPInterface
                     inventDimF.field["wMSPalletId"] = dimF.wMSPalletId;
                     inventDimF.field["inventSerialId"] = dimF.inventSerialId;
                     inventDimF = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimF);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                        ,jl.ItemId
+                        , inventDimF.field["inventDimId"]);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                        , jl.ItemId, inventDimF.field["inventDimId"]);
                     InventDim dimT = jl.InventDimTo;
                     IAxaptaRecord inventDimT = ax.CreateRecord("InventDim");
                     inventDimT.field["InventLocationId"] = dimT.InventLocationId;
@@ -174,6 +181,11 @@ namespace ERPInterface
                     inventDimT.field["wMSPalletId"] = dimT.wMSPalletId;
                     inventDimT.field["inventSerialId"] = dimT.inventSerialId;
                     inventDimT = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimT);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                        , jl.ItemId
+                        , inventDimT.field["inventDimId"]);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                       , jl.ItemId, inventDimT.field["inventDimId"]);
                     #endregion
 
                     ax.CallStaticClassMethod(
@@ -231,6 +243,8 @@ namespace ERPInterface
                     inventDim.field["wMSPalletId"] = dim.wMSPalletId;
                     inventDim.field["inventSerialId"] = dim.inventSerialId;
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                       , jl.ItemId, inventDim.field["inventDimId"]);
                     #endregion
                     ax.CallStaticClassMethod(
                         "WMS_Utility"
@@ -281,11 +295,15 @@ namespace ERPInterface
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                     IAxaptaRecord WMSOrderTrans = ax.CreateRecord("WMSOrderTrans");
                     WMSOrderTrans.ExecuteStmt(string.Format(
-                        "select * from %1 where %1.shipmentId =='{0}' && %1.orderId == '{1}'"
+                        "select * from %1 where %1.shipmentId =='{0}' && %1.orderId == '{1}' && %1.expeditionStatus != WMSexpeditionStatus::Reserved"
                         , st.ShipmentId, sl.InvOutPutOrder));
-                    ax.CallStaticClassMethod("WMS_Utility"
-                            , "Svc_WMSOrderTransReservation"
-                            , WMSOrderTrans.field["RecId"], inventDim.field["inventDimId"]);
+                    if (WMSOrderTrans.field["RecId"] != 0)
+                    {
+
+                        ax.CallStaticClassMethod("WMS_Utility"
+                                , "Svc_WMSOrderTransReservationQty"
+                                , WMSOrderTrans.field["RecId"], inventDim.field["inventDimId"], sl.Qty);
+                    }
                 }
                 //2.0 WMSShipmentFinished & SalesPackingSlip
                 ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSShipmentFinished", st.ShipmentId);
@@ -323,6 +341,8 @@ namespace ERPInterface
                     inventDim.field["wMSPalletId"] = dim.wMSPalletId;
                     inventDim.field["inventSerialId"] = dim.inventSerialId;
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                       , sl.ItemId, inventDim.field["inventDimId"]);
                     IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
                     SalesLine.ExecuteStmt(string.Format(
                         "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
@@ -378,6 +398,8 @@ namespace ERPInterface
                     inventDim.field["wMSPalletId"] = dim.wMSPalletId;
                     inventDim.field["inventSerialId"] = dim.inventSerialId;
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                       , jl.ItemId, inventDim.field["inventDimId"]);
                     #endregion
                     ax.CallStaticClassMethod(
                         "WMS_Utility"
@@ -410,6 +432,20 @@ namespace ERPInterface
         public string HelloWorld(string input)
         {
             string ret = "Hello World";
+            Axapta ax = new Axapta();
+            try
+            {
+                ax.Logon();
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+            }
+            finally
+            {
+                ax.Logoff();
+            }
             //ret = Test4InvCountJournal_Export();
             ////Test4InvCountJournal_Import(input);
             //ret = Test4InvMovementJournal_Export();
@@ -421,8 +457,10 @@ namespace ERPInterface
 
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
+            //string s = @"<PurchTable><PurchId>PP014669</PurchId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280001</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280001</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280002</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280002</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280003</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280003</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280004</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280004</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280005</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280005</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280006</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280006</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280007</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280007</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280008</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280008</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280009</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280009</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>423000100</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201707280010</inventBatchId><wMsLocationId>EMB1-IN</wMsLocationId><wMSPalletId>SL201707280010</wMSPalletId><inventSerialId>20170728CGTTEST</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
+            //ret = PurchPackingSlip(s);
             //Test SalesPackingSlik
-            //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
+            ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             //ret = SalesCreditNote(Test4SalesCreditNote_Export());
             //Test InvTransferJournal
             //ret = InvTransferJournal(Test4InvTransferJournal_Export());
@@ -430,7 +468,7 @@ namespace ERPInterface
             //ret = InvMovementJournal(Test4InvMovementJournal_Export());
             //Test InvCountJournal
             //ret = InvCountJournal(Test4InvCountJournal_Export());
-            ret = Utility.XmlResult(input);
+            //ret = Utility.XmlResult(input);
             return ret;
         }
 
@@ -562,19 +600,43 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "";
-            invDim.inventSerialId = "CTN3109 Caprice DX9";
-            invDim.wMsLocationId = "G05139";
-            invDim.wMSPalletId = "";
+            invDim.inventBatchId = "S1681043";
+            invDim.inventSerialId = "C29516";
+            invDim.wMsLocationId = "G06236";
+            invDim.wMSPalletId = "M1191783";
             //2
-            line.ItemId = "040000500";
-            line.Qty = 2;
+            line.ItemId = "305270500";
+            line.Qty = 1;
             line.InventDim = invDim;
-            line.InvOutPutOrder = "INO-030851";
+            line.InvOutPutOrder = "INO-030864";
             //3
-            header.ShipmentId = "SHP-014304";
+            header.ShipmentId = "SHP-014349";
             List<SalesShipmentLine> lst = new List<SalesShipmentLine>();
             lst.Add(line);
+            SalesShipmentLine line2 = new SalesShipmentLine();
+            InventDim invDim2 = new InventDim();
+            invDim2.InventLocationId = "CHR";
+            invDim2.inventBatchId = "S1681044";
+            invDim2.inventSerialId = "C29516";
+            invDim2.wMsLocationId = "G06236";
+            invDim2.wMSPalletId = "M1191783";
+            line2.ItemId = "305270500";
+            line2.Qty = 1;
+            line2.InventDim = invDim2;
+            line2.InvOutPutOrder = "INO-030864";
+            lst.Add(line2);
+            //SalesShipmentLine line3 = new SalesShipmentLine();
+            //InventDim invDim3 = new InventDim();
+            //invDim3.InventLocationId = "CHR";
+            //invDim3.inventBatchId = "S1681044";
+            //invDim3.inventSerialId = "C29516";
+            //invDim3.wMsLocationId = "G06236";
+            //invDim3.wMSPalletId = "M1191783";
+            //line3.ItemId = "305270500";
+            //line3.Qty = 4;
+            //line3.InventDim = invDim3;
+            //line3.InvOutPutOrder = "INO-030852";
+            //lst.Add(line3);
             header.LstShipmentLine = lst;
             return Utility.XmlSerializeToString(header);
         }
