@@ -271,9 +271,10 @@ namespace ERPInterface
             }
             return Utility.XmlResult(ret);
         }
-        
+
+        /*
         [WebMethod]
-        public string SalesPackingSlip(string input)
+        protected string Del_SalesPackingSlip(string input)
         {
             string ret = "";
             Axapta ax = new Axapta();
@@ -319,7 +320,71 @@ namespace ERPInterface
             }
             return Utility.XmlResult(ret);
         }
-        
+        */
+
+        [WebMethod]
+        public string SalesPackingSlip(string input)
+        {
+            string ret = "";
+            Axapta ax = new Axapta();
+            string strSO = "";
+            SalesShipmentTable st =
+                (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
+            List<string> lstSO = st.LstShipmentLine.Select(p => p.SalesId).ToList();
+            lstSO = lstSO.Distinct().ToList();
+            try
+            {
+                ax.Logon();
+                //1.0 Sales order Unreservation & clean delivery now
+                foreach (string item in lstSO)
+                {
+                    strSO = strSO + "," + item;
+                    ax.CallStaticClassMethod("WMS_Utility"
+                               , "Svc_SalesUnreservation"
+                               , item);
+                }
+                //2.0 Reservation
+                foreach (SalesShipmentLine sl in st.LstShipmentLine)
+                {
+                    string inventDimId = GetInventDimId(sl.InventDim,ax);
+                    ax.CallStaticClassMethod("WMS_Utility"
+                                , "Svc_SalesLineReservation"
+                                , sl.LineId, inventDimId, sl.Qty);
+                }
+                //3.0 SalesPackingSlip
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_PackingSlipByMultiSO", strSO,st.ShipmentId);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+                //1.0 Sales order Unreservation & clean delivery now
+                foreach (var item in lstSO)
+                {
+                    strSO = strSO + "," + item.ToString();
+                    ax.CallStaticClassMethod("WMS_Utility"
+                               , "Svc_SalesUnreservation"
+                               , item.ToString());
+                }
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return Utility.XmlResult(ret);
+        }
+
+        private string GetInventDimId(InventDim dim, Axapta ax)
+        {
+            IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+            inventDim.field["InventLocationId"] = dim.InventLocationId;
+            inventDim.field["inventBatchId"] = dim.inventBatchId;
+            inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+            inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+            inventDim.field["inventSerialId"] = dim.inventSerialId;
+            inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+            return inventDim.field["inventDimId"];
+        }
         [WebMethod]
         public string SalesCreditNote(string input)
         {
@@ -600,44 +665,48 @@ namespace ERPInterface
             InventDim invDim = new InventDim();
             //1
             invDim.InventLocationId = "CHR";
-            invDim.inventBatchId = "S1681043";
-            invDim.inventSerialId = "C29516";
-            invDim.wMsLocationId = "G06236";
-            invDim.wMSPalletId = "M1191783";
+            invDim.inventBatchId = "S1667014";
+            invDim.inventSerialId = "C26345";
+            invDim.wMsLocationId = "G03307";
+            invDim.wMSPalletId = "M1188033";
             //2
-            line.ItemId = "305270500";
+            line.SalesId = "SO011152";
+            line.ItemId = "026580500";
             line.Qty = 1;
             line.InventDim = invDim;
-            line.InvOutPutOrder = "INO-030864";
+            line.LineId = "221223787";
             //3
-            header.ShipmentId = "SHP-014349";
+            header.ShipmentId = "SHP-000003";
             List<SalesShipmentLine> lst = new List<SalesShipmentLine>();
             lst.Add(line);
             SalesShipmentLine line2 = new SalesShipmentLine();
             InventDim invDim2 = new InventDim();
             invDim2.InventLocationId = "CHR";
-            invDim2.inventBatchId = "S1681044";
-            invDim2.inventSerialId = "C29516";
-            invDim2.wMsLocationId = "G06236";
-            invDim2.wMSPalletId = "M1191783";
-            line2.ItemId = "305270500";
+            invDim2.inventBatchId = "S1703455";
+            invDim2.inventSerialId = "C37441";
+            invDim2.wMsLocationId = "G02108";
+            invDim2.wMSPalletId = "M1197854";
+            line2.SalesId = "SO011153";
+            line2.ItemId = "026580500";
             line2.Qty = 1;
             line2.InventDim = invDim2;
-            line2.InvOutPutOrder = "INO-030864";
+            line2.LineId = "221223782";
             lst.Add(line2);
-            //SalesShipmentLine line3 = new SalesShipmentLine();
-            //InventDim invDim3 = new InventDim();
-            //invDim3.InventLocationId = "CHR";
-            //invDim3.inventBatchId = "S1681044";
-            //invDim3.inventSerialId = "C29516";
-            //invDim3.wMsLocationId = "G06236";
-            //invDim3.wMSPalletId = "M1191783";
-            //line3.ItemId = "305270500";
-            //line3.Qty = 4;
-            //line3.InventDim = invDim3;
-            //line3.InvOutPutOrder = "INO-030852";
-            //lst.Add(line3);
+            SalesShipmentLine line3 = new SalesShipmentLine();
+            InventDim invDim3 = new InventDim();
+            invDim3.InventLocationId = "CHR";
+            invDim3.inventBatchId = "S1703455";
+            invDim3.inventSerialId = "C37441";
+            invDim3.wMsLocationId = "G02108";
+            invDim3.wMSPalletId = "M1197854";
+            line3.SalesId = "SO011153";
+            line3.ItemId = "026580500";
+            line3.Qty = 1;
+            line3.InventDim = invDim3;
+            line3.LineId = "221223782";
+            lst.Add(line3);
             header.LstShipmentLine = lst;
+            //return @"<SalesShipmentTable><ShipmentId>SHP-014302</ShipmentId><LstShipmentLine><SalesShipmentLine><ItemId>302530500G</ItemId><Qty>60</Qty><InvOutPutOrder>INO-030845</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1337612</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1096349</wMSPalletId><inventSerialId>B12161</inventSerialId></InventDim></SalesShipmentLine><SalesShipmentLine><ItemId>302530500G</ItemId><Qty>60</Qty><InvOutPutOrder>INO-030845</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1337615</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1096349</wMSPalletId><inventSerialId>B12161</inventSerialId></InventDim></SalesShipmentLine><SalesShipmentLine><ItemId>302530500G</ItemId><Qty>55</Qty><InvOutPutOrder>INO-030845</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1353734</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1100828</wMSPalletId><inventSerialId>B18022</inventSerialId></InventDim></SalesShipmentLine><SalesShipmentLine><ItemId>302530500G</ItemId><Qty>55</Qty><InvOutPutOrder>INO-030845</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1353741</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1100828</wMSPalletId><inventSerialId>B18022</inventSerialId></InventDim></SalesShipmentLine><SalesShipmentLine><ItemId>302770500G</ItemId><Qty>60</Qty><InvOutPutOrder>INO-030846</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1505701</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1143220</wMSPalletId><inventSerialId>B70498</inventSerialId></InventDim></SalesShipmentLine><SalesShipmentLine><ItemId>302770500G</ItemId><Qty>60</Qty><InvOutPutOrder>INO-030846</InvOutPutOrder><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>S1505699</inventBatchId><wMsLocationId>DOCK</wMsLocationId><wMSPalletId>M1143220</wMSPalletId><inventSerialId>B70498</inventSerialId></InventDim></SalesShipmentLine></LstShipmentLine></SalesShipmentTable>";
             return Utility.XmlSerializeToString(header);
         }
 
