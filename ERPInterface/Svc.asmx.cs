@@ -221,7 +221,7 @@ namespace ERPInterface
                 catch (Exception ex)
                 {
 
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                    //ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
                     throw ex;
                 }
             }
@@ -365,7 +365,7 @@ namespace ERPInterface
         [WebMethod]
         public string SalesPackingSlip(string input)
         {
-            string ret = "";
+            string ret = ""; 
             Axapta ax = new Axapta();
             string strSO = "";
             string packingslipId = "";
@@ -373,6 +373,11 @@ namespace ERPInterface
                 (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
             List<string> lstSO = st.LstShipmentLine.Select(p => p.SalesId).ToList();
             lstSO = lstSO.Distinct().ToList();
+            if (st.ShipmentId == "" || st.ShipmentId == null)
+            {
+                ret = "ShipmentId con't be null.";
+                return Utility.XmlResult(ret);
+            }
             try
             {
                 ax.Logon();
