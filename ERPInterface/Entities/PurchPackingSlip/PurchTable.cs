@@ -12,4 +12,16 @@ namespace ERPInterface.Entities
         public bool Receive { get; set; }
         public string PackingSlipId { get; set; }
     }
+
+    public class PurchCreditNote
+    {
+        public string PurchId { get; set; }
+        public string ItemId { get; set; }
+        public InventDim InventDim { get; set; }
+        public decimal Qty { get; set; }
+        public string PackingSlipId { get; set; }
+    }
+
+
+
 }

@@ -19,6 +19,60 @@ namespace ERPInterface
     // [System.Web.Script.Services.ScriptService]
     public class Svc : System.Web.Services.WebService   
     {
+        [WebMethod]
+        public string PurchCreditNoteByItem(string input)
+        {
+            string ret = "";
+             Axapta ax = new Axapta();
+            try
+            {
+                // 1.0 get parameters
+                PurchCreditNote pt = (PurchCreditNote)Utility.XmlDeserializeFromString(input, typeof(PurchCreditNote));
+
+                ax.Logon();
+
+                // 2.0 update purchline
+                string oriLineId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchCreditFetchLine"
+                                                            , pt.PurchId, pt.ItemId,pt.InventDim.inventSerialId);
+                InventDim dim = pt.InventDim;
+                IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                inventDim.field["InventLocationId"] = dim.InventLocationId;
+                inventDim.field["inventBatchId"] = dim.inventBatchId;
+                inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                inventDim.field["inventSerialId"] = dim.inventSerialId;
+                //inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                inventDim = ax.CallStaticClassMethod("WMS_Utility", "Svc_InventDim", pt.ItemId, inventDim);
+                string inventDimId = inventDim.field["inventDimId"];
+                string purchId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchCreditCreatePO"
+                                                            , oriLineId, pt.Qty, inventDimId);
+                // 3.0 create packingslip parm
+                // DocumentStatus::PackingSlip = 5
+                IAxaptaObject purchFormLetter =
+                    ax.CallStaticClassMethod("PurchFormLetter", "construct", 5) as IAxaptaObject;
+                IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
+                purchTable.ExecuteStmt(string.Format(
+                        "select forupdate * from %1 where %1.PurchId =='{0}'"
+                        , pt.PurchId));
+                // 4.0 post packingslip               
+                //PurchUpdate::ReceiveNow = 0
+                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
+                Log.Error(input);
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return Utility.XmlResult(ret);
+        }
+
         public string PurchCreditNote(string input)
         {
             string ret = "";
@@ -385,17 +439,13 @@ namespace ERPInterface
                 foreach (string item in lstSO)
                 {
                     strSO = strSO + "," + item;
-                    ax.CallStaticClassMethod("WMS_Utility"
-                               , "Svc_SalesUnreservation"
-                               , item);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesUnreservation", item);
                 }
                 //2.0 Reservation
                 foreach (SalesShipmentLine sl in st.LstShipmentLine)
                 {
                     string inventDimId = GetInventDimId(sl.InventDim,ax);
-                    ax.CallStaticClassMethod("WMS_Utility"
-                                , "Svc_SalesLineReservation"
-                                , sl.LineId, inventDimId, sl.Qty);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesLineReservation", sl.LineId, inventDimId, sl.Qty);
                 }
                 //3.0 SalesPackingSlip
                 packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlipByMultiSO", strSO,st.ShipmentId);
@@ -632,8 +682,8 @@ namespace ERPInterface
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
             //string s = @"<PurchTable><PurchId>PP014835</PurchId><LstPurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
-            string s = @"<PurchTable><PurchId>PP014631</PurchId><PackingSlipId>CGRK2017August0005</PackingSlipId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>-440</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId></inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId></wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>false</Receive></PurchTable>";
-            ret = PurchPackingSlip(s);
+            //string s = @"<PurchTable><PurchId>PP014631</PurchId><PackingSlipId>CGRK2017August0005</PackingSlipId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>-440</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId></inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId></wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>false</Receive></PurchTable>";
+            //ret = PurchPackingSlip(s);
             //Test SalesPackingSlik
             //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             //ret = SalesCreditNote(Test4SalesCreditNote_Export());
@@ -644,6 +694,8 @@ namespace ERPInterface
             //Test InvCountJournal
             //ret = InvCountJournal(Test4InvCountJournal_Export());
             //ret = Utility.XmlResult(input);
+            ret = Test4PurchCreditNote_Export();
+            ret = PurchCreditNoteByItem(ret);
             return ret;
         }
 
@@ -768,7 +820,25 @@ namespace ERPInterface
             header.LstPurchLine = lst;
             return Utility.XmlSerializeToString(header);
         }
-
+        private string Test4PurchCreditNote_Export()
+        {
+            PurchCreditNote header = new PurchCreditNote();
+            InventDim invDim = new InventDim();
+            //1
+            invDim.InventLocationId = "CHR";
+            invDim.inventBatchId = "SL201709140009";
+            invDim.inventSerialId = "201709142590";
+            invDim.wMsLocationId = "R01105";
+            invDim.wMSPalletId = "";
+            
+            //3
+            header.PurchId = "PP014847";
+            header.PackingSlipId = "Packing Slip 001";
+            header.ItemId = "RC040049";
+            header.Qty = -10;
+            header.InventDim = invDim;
+            return Utility.XmlSerializeToString(header);
+        }
         private string Test4SalesPackingSlip_Export()
         {
             SalesShipmentTable header = new SalesShipmentTable();
