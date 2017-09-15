@@ -49,7 +49,7 @@ namespace ERPInterface
                         "select forupdate * from %1 where %1.PurchId =='{0}' && %1.LineNum == {1}"
                         ,pt.PurchId,pl.LineNum);
                     axRecord.ExecuteStmt(stmt);
-                    axRecord.field["PurchReceivedNow"] = pt.Receive ? pl.Qty : pl.Qty * -1;
+                    axRecord.field["PurchReceivedNow"] = pl.Qty;
                     axRecord.field["inventDimId"] = inventDimId;
                     axRecord.Call("setInventReceivedNow");
                     axRecord.DoUpdate();
@@ -65,7 +65,7 @@ namespace ERPInterface
                         , pt.PurchId));
                 // 4.0 post packingslip               
                 //PurchUpdate::ReceiveNow = 0
-                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 2);
+                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
                 #endregion
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return ret;
         }
 
         [WebMethod]
@@ -632,13 +632,13 @@ namespace ERPInterface
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
             //string s = @"<PurchTable><PurchId>PP014835</PurchId><LstPurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
-            //string s = @"<PurchTable><PurchId>PP014631</PurchId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200801</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200801</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200802</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200802</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200803</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200803</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200804</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200804</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>40</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200805</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200805</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
-            //ret = PurchPackingSlip(s);
+            string s = @"<PurchTable><PurchId>PP014631</PurchId><PackingSlipId>CGRK2017August0005</PackingSlipId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>-440</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId></inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId></wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>false</Receive></PurchTable>";
+            ret = PurchPackingSlip(s);
             //Test SalesPackingSlik
             //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             //ret = SalesCreditNote(Test4SalesCreditNote_Export());
             //Test InvTransferJournal
-            ret = InvTransferJournal(Test4InvTransferJournal_Export());
+            //ret = InvTransferJournal(Test4InvTransferJournal_Export());
             //Test InvMovementJournal
             //ret = InvMovementJournal(Test4InvMovementJournal_Export());
             //Test InvCountJournal
