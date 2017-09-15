@@ -210,11 +210,20 @@ namespace ERPInterface
                         , inventDimF.field["inventDimId"]
                         , inventDimT.field["inventDimId"]);
                 }
-                //3.0 post journal
-                ax.CallStaticClassMethod(
-                        "WMS_Utility"
-                        , "Svc_PostInventoryJournal"
-                        , inventJournalTable.field["JournalId"]);
+                try
+                {
+                    //3.0 post journal
+                    ax.CallStaticClassMethod(
+                            "WMS_Utility"
+                            , "Svc_PostInventoryJournal"
+                            , inventJournalTable.field["JournalId"]);
+                }
+                catch (Exception ex)
+                {
+
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                    throw ex;
+                }
             }
             catch (Exception ex)
             {
@@ -272,11 +281,21 @@ namespace ERPInterface
                         , inventDim.field["inventDimId"]
                         , jl.OffsetAccount);
                 }
-                //3.0 post journal
-                ax.CallStaticClassMethod(
-                        "WMS_Utility"
-                        , "Svc_PostInventoryJournal"
-                        , inventJournalTable.field["JournalId"]);
+
+                try
+                {
+                    //3.0 post journal
+                    ax.CallStaticClassMethod(
+                            "WMS_Utility"
+                            , "Svc_PostInventoryJournal"
+                            , inventJournalTable.field["JournalId"]);
+                }
+                catch (Exception ex)
+                {
+
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                    throw ex;
+                }
             }
             catch (Exception ex)
             {
@@ -547,11 +566,19 @@ namespace ERPInterface
                         , inventDim.field["inventDimId"]
                         );
                 }
-                //3.0 post journal
-                ax.CallStaticClassMethod(
-                        "WMS_Utility"
-                        , "Svc_PostInventoryJournal"
-                        , inventJournalTable.field["JournalId"]);
+                try
+                {
+                    //3.0 post journal
+                    ax.CallStaticClassMethod(
+                            "WMS_Utility"
+                            , "Svc_PostInventoryJournal"
+                            , inventJournalTable.field["JournalId"]);
+                }
+                catch (Exception ex)
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                    throw ex;
+                }
             }
             catch (Exception ex)
             {
@@ -577,7 +604,7 @@ namespace ERPInterface
             try
             {
                 ax.Logon();
-                ret = ax.CallStaticClassMethod("WMS_Utility", "test", "CPS026236");              
+                //ret = ax.CallStaticClassMethod("WMS_Utility", "test", "CPS026236");              
             }
             catch (Exception ex)
             {
@@ -606,7 +633,7 @@ namespace ERPInterface
             //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             //ret = SalesCreditNote(Test4SalesCreditNote_Export());
             //Test InvTransferJournal
-            //ret = InvTransferJournal(Test4InvTransferJournal_Export());
+            ret = InvTransferJournal(Test4InvTransferJournal_Export());
             //Test InvMovementJournal
             //ret = InvMovementJournal(Test4InvMovementJournal_Export());
             //Test InvCountJournal
