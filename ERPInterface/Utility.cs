@@ -62,6 +62,14 @@ namespace ERPInterface
             result.erroMsg = ret;
             return Utility.XmlSerializeToString(result);
         }
+
+        public static string XmlResult(string ret,string msg)
+        {
+            Result result = new Result();
+            result.successful = ret == "";
+            result.erroMsg = result.successful ? msg : ret;
+            return Utility.XmlSerializeToString(result);
+        }
     }
 
     public class Result

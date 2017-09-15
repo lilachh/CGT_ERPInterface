@@ -93,6 +93,7 @@
     <Compile Include="Entities\InvTransferJournal\InvJournalTable.cs" />
     <Compile Include="Entities\PurchPackingSlip\PurchLine.cs" />
     <Compile Include="Entities\PurchPackingSlip\PurchTable.cs" />
+    <Compile Include="Entities\SalesPackingSlip\SalesCreditNote.cs" />
     <Compile Include="Entities\SalesPackingSlip\SalesLine.cs" />
     <Compile Include="Entities\SalesPackingSlip\SalesShipmentLine.cs" />
     <Compile Include="Entities\SalesPackingSlip\SalesShipmentTable.cs" />

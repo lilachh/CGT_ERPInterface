@@ -9,6 +9,7 @@ namespace ERPInterface.Entities
     {
         public string PurchId { get; set; }
         public List<PurchLine> LstPurchLine { get; set; }
-        public bool Receive { get; set; } 
+        public bool Receive { get; set; }
+        public string PackingSlipId { get; set; }
     }
 }

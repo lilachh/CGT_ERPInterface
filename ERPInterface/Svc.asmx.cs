@@ -1,5 +1,6 @@
 ﻿using AxaptaCOMConnector;
 using ERPInterface.Entities;
+using ERPInterface.Entities.SalesPackingSlip;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,7 +65,7 @@ namespace ERPInterface
                         , pt.PurchId));
                 // 4.0 post packingslip               
                 //PurchUpdate::ReceiveNow = 0
-                purchFormLetter.Call("update",purchTable,DateTime.Now.ToLongTimeString(), DateTime.Now,0);
+                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 2);
                 #endregion
             }
             catch (Exception ex)
@@ -79,7 +80,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return ret;
+            return Utility.XmlResult(ret);
         }
 
         [WebMethod]
@@ -88,11 +89,13 @@ namespace ERPInterface
             Log.Info("PurchPackingSlip");
             Log.Info(input);
             string ret = "";
+            string purchId = "";
             Axapta ax = new Axapta();
             try
             {
                 // 1.0 get parameters
                 PurchTable pt = (PurchTable)Utility.XmlDeserializeFromString(input, typeof(PurchTable));
+                purchId = pt.PurchId;
                 if (pt.Receive)
                 {
                     #region Log on 
@@ -125,7 +128,7 @@ namespace ERPInterface
                             , pt.PurchId));
                     // 4.0 post packingslip               
                     //PurchUpdate::Recorded = 2
-                    purchFormLetter.Call("update", purchTable, DateTime.Now.ToLongTimeString(), DateTime.Now, 2);
+                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 2);             
                     #endregion
                 }
                 else
@@ -140,6 +143,8 @@ namespace ERPInterface
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
                 Log.Error(input);
+                //roll back
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId);
             }
             finally
             {
@@ -344,6 +349,7 @@ namespace ERPInterface
             string ret = "";
             Axapta ax = new Axapta();
             string strSO = "";
+            string packingslipId = "";
             SalesShipmentTable st =
                 (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
             List<string> lstSO = st.LstShipmentLine.Select(p => p.SalesId).ToList();
@@ -368,7 +374,7 @@ namespace ERPInterface
                                 , sl.LineId, inventDimId, sl.Qty);
                 }
                 //3.0 SalesPackingSlip
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_PackingSlipByMultiSO", strSO,st.ShipmentId);
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlipByMultiSO", strSO,st.ShipmentId);
             }
             catch (Exception ex)
             {
@@ -390,7 +396,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, packingslipId);
         }
 
         private string GetInventDimId(InventDim dim, Axapta ax)
@@ -408,6 +414,7 @@ namespace ERPInterface
         public string SalesCreditNote(string input)
         {
             string ret = "";
+            string packingslipId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -438,7 +445,11 @@ namespace ERPInterface
                 }
                 ax.TTSCommit();
                 // SalesUpdate::DeliverNow = 0
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0);
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0);
+                if (packingslipId == "")
+                {
+                    throw new Exception("Post Sales Packing Slip failed!");
+                }
             }
             catch (Exception ex)
             {
@@ -452,7 +463,47 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, packingslipId);
+        }
+
+        [WebMethod]
+        public string Tmp_SalesCreditNote(string input)
+        {
+            string ret = "";
+            string packingslipId = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                SalesCreditNote st =
+                    (SalesCreditNote)Utility.XmlDeserializeFromString(input, typeof(SalesCreditNote));
+                string salesId = "";
+                ax.Logon();
+                // 1. create sales table
+                // 2. create sales line
+                ax.TTSBegin();
+                
+                ax.TTSCommit();
+                // 3. post packing slip
+                // SalesUpdate::DeliverNow = 0
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip", salesId, 0);
+                if (packingslipId == "")
+                {
+                    throw new Exception("Post Sales Packing Slip failed!");
+                }
+            }
+            catch (Exception ex)
+            {
+                ax.TTSAbort();
+                ret = ex.Message;
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
+                Log.Error(input);
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return Utility.XmlResult(ret, packingslipId);
         }
 
 
@@ -526,6 +577,7 @@ namespace ERPInterface
             try
             {
                 ax.Logon();
+                ret = ax.CallStaticClassMethod("WMS_Utility", "test", "CPS026236");              
             }
             catch (Exception ex)
             {
@@ -547,9 +599,9 @@ namespace ERPInterface
 
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
-            string s = @"<PurchTable><PurchId>PP014835</PurchId><LstPurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300010</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300010</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300010</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300010</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300011</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300011</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300011</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300011</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300012</inventBatchId><wMsLocationId>D11102</wMsLocationId><wMSPalletId>SL201708300012</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300012</inventBatchId><wMsLocationId>D11102</wMsLocationId><wMSPalletId>SL201708300012</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
+            //string s = @"<PurchTable><PurchId>PP014835</PurchId><LstPurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
             //string s = @"<PurchTable><PurchId>PP014631</PurchId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200801</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200801</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200802</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200802</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200803</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200803</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>100</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200804</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200804</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>40</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708200805</inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId>SL201708200805</wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
-            ret = PurchPackingSlip(s);
+            //ret = PurchPackingSlip(s);
             //Test SalesPackingSlik
             //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
             //ret = SalesCreditNote(Test4SalesCreditNote_Export());
@@ -666,6 +718,7 @@ namespace ERPInterface
             //3
             header.PurchId = "PP014807";
             header.Receive = false;
+            header.PackingSlipId = "Packing Slip 001";
             List<PurchLine> lst = new List<PurchLine>();
             lst.Add(line);
             InventDim invDim2 = new InventDim();
