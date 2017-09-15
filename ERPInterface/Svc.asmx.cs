@@ -659,7 +659,7 @@ namespace ERPInterface
             try
             {
                 ax.Logon();
-                //ret = ax.CallStaticClassMethod("WMS_Utility", "test", "CPS026236");              
+                ret = ax.CallStaticClassMethod("WMS_Utility", "HelloWorld", input);              
             }
             catch (Exception ex)
             {
@@ -694,8 +694,8 @@ namespace ERPInterface
             //Test InvCountJournal
             //ret = InvCountJournal(Test4InvCountJournal_Export());
             //ret = Utility.XmlResult(input);
-            ret = Test4PurchCreditNote_Export();
-            ret = PurchCreditNoteByItem(ret);
+            //ret = Test4PurchCreditNote_Export();
+            //ret = PurchCreditNoteByItem(ret);
             return ret;
         }
 
