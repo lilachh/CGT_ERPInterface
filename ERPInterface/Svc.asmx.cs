@@ -53,10 +53,18 @@ namespace ERPInterface
                 IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
                 purchTable.ExecuteStmt(string.Format(
                         "select forupdate * from %1 where %1.PurchId =='{0}'"
-                        , pt.PurchId));
-                // 4.0 post packingslip               
-                //PurchUpdate::ReceiveNow = 0
-                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
+                        , purchId));
+                try
+                {
+                    // 4.0 post packingslip               
+                    //PurchUpdate::ReceiveNow = 0
+                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
+                }
+                catch (Exception ex)
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeletePurchCredit", purchId);
+                    throw ex;
+                }
             }
             catch (Exception ex)
             {
@@ -275,7 +283,7 @@ namespace ERPInterface
                 catch (Exception ex)
                 {
 
-                    //ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
                     throw ex;
                 }
             }
