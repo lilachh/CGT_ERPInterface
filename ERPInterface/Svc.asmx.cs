@@ -22,6 +22,8 @@ namespace ERPInterface
         [WebMethod]
         public string PurchCreditNoteByItem(string input)
         {
+            Log.Info("PurchCreditNoteByItem");
+            Log.Info(input);
             string ret = "";
              Axapta ax = new Axapta();
             try
@@ -218,6 +220,8 @@ namespace ERPInterface
         [WebMethod]
         public string InvTransferJournal(string input)
         {
+            Log.Info("InvTransferJournal");
+            Log.Info(input);
             string ret = "";
             Axapta ax = new Axapta();
             try
@@ -306,6 +310,8 @@ namespace ERPInterface
         [WebMethod]
         public string InvMovementJournal(string input)
         {
+            Log.Info("InvMovementJournal");
+            Log.Info(input);
             string ret = "";
             Axapta ax = new Axapta();
             try
@@ -427,6 +433,8 @@ namespace ERPInterface
         [WebMethod]
         public string SalesPackingSlip(string input)
         {
+            Log.Info("SalesPackingSlip");
+            Log.Info(input);
             string ret = ""; 
             Axapta ax = new Axapta();
             string strSO = "";
@@ -495,6 +503,8 @@ namespace ERPInterface
         [WebMethod]
         public string SalesCreditNote(string input)
         {
+            Log.Info("SalesCreditNote");
+            Log.Info(input);
             string ret = "";
             string packingslipId = "";
             Axapta ax = new Axapta();
@@ -547,51 +557,12 @@ namespace ERPInterface
             }
             return Utility.XmlResult(ret, packingslipId);
         }
-
-        [WebMethod]
-        public string Tmp_SalesCreditNote(string input)
-        {
-            string ret = "";
-            string packingslipId = "";
-            Axapta ax = new Axapta();
-            try
-            {
-                SalesCreditNote st =
-                    (SalesCreditNote)Utility.XmlDeserializeFromString(input, typeof(SalesCreditNote));
-                string salesId = "";
-                ax.Logon();
-                // 1. create sales table
-                // 2. create sales line
-                ax.TTSBegin();
-                
-                ax.TTSCommit();
-                // 3. post packing slip
-                // SalesUpdate::DeliverNow = 0
-                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip", salesId, 0);
-                if (packingslipId == "")
-                {
-                    throw new Exception("Post Sales Packing Slip failed!");
-                }
-            }
-            catch (Exception ex)
-            {
-                ax.TTSAbort();
-                ret = ex.Message;
-                Log.Error(ex.Message);
-                Log.Error(ex.StackTrace);
-                Log.Error(input);
-            }
-            finally
-            {
-                ax.Logoff();
-            }
-            return Utility.XmlResult(ret, packingslipId);
-        }
-
-
+        
         [WebMethod]
         public string InvCountJournal(string input)
         {
+            Log.Info("InvCountJournal");
+            Log.Info(input);
             string ret = "";
             Axapta ax = new Axapta();
             try
@@ -662,12 +633,15 @@ namespace ERPInterface
         [WebMethod]
         public string HelloWorld(string input)
         {
+            Log.Info("InvCountJournal");
+            Log.Info(input);
             string ret = "Hello World";
             Axapta ax = new Axapta();
             try
             {
                 ax.Logon();
-                ret = ax.CallStaticClassMethod("WMS_Utility", "HelloWorld", input);              
+                ret = ax.CallStaticClassMethod("WMS_Utility", "HelloWorld", input);
+                Log.Error(ret);
             }
             catch (Exception ex)
             {
