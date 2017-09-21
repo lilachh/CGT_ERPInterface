@@ -70,7 +70,6 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -202,7 +201,6 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -293,7 +291,6 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
 
                 Log.Error(ex.Message);
@@ -367,7 +364,6 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -461,14 +457,18 @@ namespace ERPInterface
                 foreach (SalesShipmentLine sl in st.LstShipmentLine)
                 {
                     string inventDimId = GetInventDimId(sl.InventDim,ax);
+                    IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesLineReservation", sl.LineId, inventDimId, sl.Qty);
                 }
                 //3.0 SalesPackingSlip
                 packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlipByMultiSO", strSO,st.ShipmentId);
+                if (packingslipId == "")
+                {
+                    throw new Exception("Post Sales Packing Slip failed!");
+                }
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -616,7 +616,6 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
-                ax.TTSAbort();
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -664,7 +663,7 @@ namespace ERPInterface
             //Test PurchPackingSlip
             //ret = PurchPackingSlip(Test4PurchPackingSlip_Export());
             //string s = @"<PurchTable><PurchId>PP014835</PurchId><LstPurchLine><PurchLine><LineNum>1.000000000000</LineNum><ItemId>RC040049</ItemId><Qty>400</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId>SL201708300009</inventBatchId><wMsLocationId>D11101</wMsLocationId><wMSPalletId>SL201708300009</wMSPalletId><inventSerialId>20170830556</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>true</Receive></PurchTable>";
-            //string s = @"<PurchTable><PurchId>PP014631</PurchId><PackingSlipId>CGRK2017August0005</PackingSlipId><LstPurchLine><PurchLine><LineNum>3.000000000000</LineNum><ItemId>RC040048</ItemId><Qty>-440</Qty><InventDim><InventLocationId>CHR</InventLocationId><inventBatchId></inventBatchId><wMsLocationId>R01101</wMsLocationId><wMSPalletId></wMSPalletId><inventSerialId>2017082112345</inventSerialId></InventDim></PurchLine></LstPurchLine><Receive>false</Receive></PurchTable>";
+            //string s = @"<InvJournalTable><Description /><LstJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>60</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711321</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711321</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>60</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711322</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711322</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>60</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711323</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711323</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>60</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711324</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711324</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711325</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711325</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711328</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711328</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711329</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711329</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711326</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711326</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711327</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711327</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine><InvJournalLine><ItemId>301520500</ItemId><Qty>0</Qty><InventDimFrom><InventLocationId>CHR</InventLocationId><inventBatchId>S1711330</inventBatchId><wMsLocationId>G07405</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimFrom><InventDimTo><InventLocationId>CHR</InventLocationId><inventBatchId>S1711330</inventBatchId><wMsLocationId>Buffer</wMsLocationId><wMSPalletId>M1199879</wMSPalletId><inventSerialId>C36651</inventSerialId></InventDimTo></InvJournalLine></LstJournalLine></InvJournalTable>";
             //ret = PurchPackingSlip(s);
             //Test SalesPackingSlik
             //ret = SalesPackingSlip(Test4SalesPackingSlip_Export());
@@ -678,8 +677,10 @@ namespace ERPInterface
             //ret = Utility.XmlResult(input);
             //ret = Test4PurchCreditNote_Export();
             //ret = PurchCreditNoteByItem(ret);
+            //string ret = InvTransferJournal(s);
             return ret;
         }
+
 
         private string Test4InvCountJournal_Export()
         {

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="PurchCreditNoteByItem">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="PurchCreditNoteByItemResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="PurchCreditNoteByItemResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="PurchPackingSlip">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="PurchPackingSlipResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="PurchPackingSlipResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvTransferJournal">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvTransferJournalResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InvTransferJournalResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvMovementJournal">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvMovementJournalResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InvMovementJournalResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SalesPackingSlip">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SalesPackingSlipResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SalesPackingSlipResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SalesCreditNote">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SalesCreditNoteResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SalesCreditNoteResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvCountJournal">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InvCountJournalResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InvCountJournalResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="HelloWorld">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="HelloWorldResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="HelloWorldResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="PurchCreditNoteByItemSoapIn">
+    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItem" />
+  </wsdl:message>
+  <wsdl:message name="PurchCreditNoteByItemSoapOut">
+    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItemResponse" />
+  </wsdl:message>
+  <wsdl:message name="PurchPackingSlipSoapIn">
+    <wsdl:part name="parameters" element="tns:PurchPackingSlip" />
+  </wsdl:message>
+  <wsdl:message name="PurchPackingSlipSoapOut">
+    <wsdl:part name="parameters" element="tns:PurchPackingSlipResponse" />
+  </wsdl:message>
+  <wsdl:message name="InvTransferJournalSoapIn">
+    <wsdl:part name="parameters" element="tns:InvTransferJournal" />
+  </wsdl:message>
+  <wsdl:message name="InvTransferJournalSoapOut">
+    <wsdl:part name="parameters" element="tns:InvTransferJournalResponse" />
+  </wsdl:message>
+  <wsdl:message name="InvMovementJournalSoapIn">
+    <wsdl:part name="parameters" element="tns:InvMovementJournal" />
+  </wsdl:message>
+  <wsdl:message name="InvMovementJournalSoapOut">
+    <wsdl:part name="parameters" element="tns:InvMovementJournalResponse" />
+  </wsdl:message>
+  <wsdl:message name="SalesPackingSlipSoapIn">
+    <wsdl:part name="parameters" element="tns:SalesPackingSlip" />
+  </wsdl:message>
+  <wsdl:message name="SalesPackingSlipSoapOut">
+    <wsdl:part name="parameters" element="tns:SalesPackingSlipResponse" />
+  </wsdl:message>
+  <wsdl:message name="SalesCreditNoteSoapIn">
+    <wsdl:part name="parameters" element="tns:SalesCreditNote" />
+  </wsdl:message>
+  <wsdl:message name="SalesCreditNoteSoapOut">
+    <wsdl:part name="parameters" element="tns:SalesCreditNoteResponse" />
+  </wsdl:message>
+  <wsdl:message name="InvCountJournalSoapIn">
+    <wsdl:part name="parameters" element="tns:InvCountJournal" />
+  </wsdl:message>
+  <wsdl:message name="InvCountJournalSoapOut">
+    <wsdl:part name="parameters" element="tns:InvCountJournalResponse" />
+  </wsdl:message>
+  <wsdl:message name="HelloWorldSoapIn">
+    <wsdl:part name="parameters" element="tns:HelloWorld" />
+  </wsdl:message>
+  <wsdl:message name="HelloWorldSoapOut">
+    <wsdl:part name="parameters" element="tns:HelloWorldResponse" />
+  </wsdl:message>
+  <wsdl:portType name="SvcSoap">
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <wsdl:input message="tns:PurchCreditNoteByItemSoapIn" />
+      <wsdl:output message="tns:PurchCreditNoteByItemSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="PurchPackingSlip">
+      <wsdl:input message="tns:PurchPackingSlipSoapIn" />
+      <wsdl:output message="tns:PurchPackingSlipSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InvTransferJournal">
+      <wsdl:input message="tns:InvTransferJournalSoapIn" />
+      <wsdl:output message="tns:InvTransferJournalSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InvMovementJournal">
+      <wsdl:input message="tns:InvMovementJournalSoapIn" />
+      <wsdl:output message="tns:InvMovementJournalSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SalesPackingSlip">
+      <wsdl:input message="tns:SalesPackingSlipSoapIn" />
+      <wsdl:output message="tns:SalesPackingSlipSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SalesCreditNote">
+      <wsdl:input message="tns:SalesCreditNoteSoapIn" />
+      <wsdl:output message="tns:SalesCreditNoteSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InvCountJournal">
+      <wsdl:input message="tns:InvCountJournalSoapIn" />
+      <wsdl:output message="tns:InvCountJournalSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="HelloWorld">
+      <wsdl:input message="tns:HelloWorldSoapIn" />
+      <wsdl:output message="tns:HelloWorldSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SvcSoap" type="tns:SvcSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <soap:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PurchPackingSlip">
+      <soap:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvTransferJournal">
+      <soap:operation soapAction="http://tempuri.org/InvTransferJournal" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvMovementJournal">
+      <soap:operation soapAction="http://tempuri.org/InvMovementJournal" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SalesPackingSlip">
+      <soap:operation soapAction="http://tempuri.org/SalesPackingSlip" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SalesCreditNote">
+      <soap:operation soapAction="http://tempuri.org/SalesCreditNote" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvCountJournal">
+      <soap:operation soapAction="http://tempuri.org/InvCountJournal" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="HelloWorld">
+      <soap:operation soapAction="http://tempuri.org/HelloWorld" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="SvcSoap12" type="tns:SvcSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <soap12:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PurchPackingSlip">
+      <soap12:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvTransferJournal">
+      <soap12:operation soapAction="http://tempuri.org/InvTransferJournal" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvMovementJournal">
+      <soap12:operation soapAction="http://tempuri.org/InvMovementJournal" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SalesPackingSlip">
+      <soap12:operation soapAction="http://tempuri.org/SalesPackingSlip" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SalesCreditNote">
+      <soap12:operation soapAction="http://tempuri.org/SalesCreditNote" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InvCountJournal">
+      <soap12:operation soapAction="http://tempuri.org/InvCountJournal" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="HelloWorld">
+      <soap12:operation soapAction="http://tempuri.org/HelloWorld" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Svc">
+    <wsdl:port name="SvcSoap" binding="tns:SvcSoap">
+      <soap:address location="http://cgtc-wms01.cgt.local/Interface/Svc.asmx" />
+    </wsdl:port>
+    <wsdl:port name="SvcSoap12" binding="tns:SvcSoap12">
+      <soap12:address location="http://cgtc-wms01.cgt.local/Interface/Svc.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
