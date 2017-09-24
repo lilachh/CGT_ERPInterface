@@ -27,6 +27,7 @@ namespace ERPInterface
             Log.Info(input);
             string ret = "";
             string purchId = "";
+            string packingslipId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -69,7 +70,13 @@ namespace ERPInterface
                         , int.Parse(pt.DateYMD.Substring(4, 2))
                         , int.Parse(pt.DateYMD.Substring(6, 2)));
                     //PurchUpdate::Recorded = 2
-                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 2);             
+                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 2);
+                    IAxaptaRecord purchJour = purchFormLetter.Call("journal");
+                    packingslipId = purchJour.field["PackingSlipId"]; 
+                    if(packingslipId == "")
+                    {
+                        throw new Exception("Post Purchase Packing Slip failed!");
+                    }
                     #endregion
                 }
                 else
@@ -90,7 +97,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, packingslipId);
         }
 
         [WebMethod]
@@ -99,7 +106,8 @@ namespace ERPInterface
             Log.Info("PurchCreditNoteByItem");
             Log.Info(input);
             string ret = "";
-             Axapta ax = new Axapta();
+            string packingslipId = "";
+            Axapta ax = new Axapta();
             try
             {
                 // 1.0 get parameters
@@ -138,6 +146,12 @@ namespace ERPInterface
                         , int.Parse(pt.DateYMD.Substring(6, 2)));
                     //PurchUpdate::ReceiveNow = 0
                     purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 0);
+                    IAxaptaRecord purchJour = purchFormLetter.Call("journal");
+                    packingslipId = purchJour.field["PackingSlipId"];
+                    if (packingslipId == "")
+                    {
+                        throw new Exception("Post Purchase Packing Slip failed!");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -156,7 +170,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, packingslipId);
         }
 
         public string PurchCreditNote(string input)
@@ -232,6 +246,7 @@ namespace ERPInterface
             Log.Info("InvTransferJournal");
             Log.Info(input);
             string ret = "";
+            string jourId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -248,6 +263,7 @@ namespace ERPInterface
                 inventJournalTable.Call("initFromInventJournalName", inventJournalName);
                 inventJournalTable.field["Description"] = jt.Description;
                 inventJournalTable.Call("insert");
+                jourId = inventJournalTable.field["JournalId"]; 
                 //2.0 add lines
                 foreach (InvJournalLine jl in jt.LstJournalLine)
                 {
@@ -316,7 +332,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, jourId);
         }
         
         [WebMethod]
@@ -325,6 +341,7 @@ namespace ERPInterface
             Log.Info("InvMovementJournal");
             Log.Info(input);
             string ret = "";
+            string jourId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -341,6 +358,7 @@ namespace ERPInterface
                 inventJournalTable.Call("initFromInventJournalName", inventJournalName);
                 inventJournalTable.field["Description"] = jt.Description;
                 inventJournalTable.Call("insert");
+                jourId = inventJournalTable.field["JournalId"];
                 //2.0 add lines
                 foreach (InvMovementLine jl in jt.ListMovementLine)
                 {
@@ -392,7 +410,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, jourId);
         }
 
         [WebMethod]
@@ -528,6 +546,7 @@ namespace ERPInterface
             Log.Info("InvCountJournal");
             Log.Info(input);
             string ret = "";
+            string jourId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -544,6 +563,7 @@ namespace ERPInterface
                 inventJournalTable.Call("initFromInventJournalName", inventJournalName);
                 inventJournalTable.field["Description"] = jt.Description;
                 inventJournalTable.Call("insert");
+                jourId = inventJournalTable.field["JournalId"];
                 //2.0 add lines
                 foreach (InvCountLine jl in jt.LstCountLine)
                 {
@@ -593,7 +613,7 @@ namespace ERPInterface
             {
                 ax.Logoff();
             }
-            return Utility.XmlResult(ret);
+            return Utility.XmlResult(ret, jourId);
         }
         
         private string GetInventDimId(InventDim dim, Axapta ax)
