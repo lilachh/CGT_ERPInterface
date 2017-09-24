@@ -9,5 +9,6 @@ namespace ERPInterface.Entities
     {
         public string Description { get; set; }
         public List<InvJournalLine> LstJournalLine { get; set; }
+        public string DateYMD { get; set; }
     }
 }

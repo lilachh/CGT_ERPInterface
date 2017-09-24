@@ -11,6 +11,7 @@ namespace ERPInterface.Entities
         public List<PurchLine> LstPurchLine { get; set; }
         public bool Receive { get; set; }
         public string PackingSlipId { get; set; }
+        public string DateYMD { get; set; }
     }
 
     public class PurchCreditNote
@@ -20,6 +21,7 @@ namespace ERPInterface.Entities
         public InventDim InventDim { get; set; }
         public decimal Qty { get; set; }
         public string PackingSlipId { get; set; }
+        public string DateYMD { get; set; }
     }
 
 

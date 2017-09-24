@@ -10,5 +10,6 @@ namespace ERPInterface.Entities
         public string ShipmentId { get; set; }
         //public string EmpId { get; set; }
         public List<SalesShipmentLine> LstShipmentLine { get; set; }
+        public string DateYMD { get; set; }
     }
 }

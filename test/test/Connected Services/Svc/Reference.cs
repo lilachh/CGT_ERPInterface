@@ -16,18 +16,18 @@ namespace test.Svc {
     public interface SvcSoap {
         
         // CODEGEN: Generating message contract since element name input from namespace http://tempuri.org/ is not marked nillable
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchCreditNoteByItem", ReplyAction="*")]
-        test.Svc.PurchCreditNoteByItemResponse PurchCreditNoteByItem(test.Svc.PurchCreditNoteByItemRequest request);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchCreditNoteByItem", ReplyAction="*")]
-        System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> PurchCreditNoteByItemAsync(test.Svc.PurchCreditNoteByItemRequest request);
-        
-        // CODEGEN: Generating message contract since element name input from namespace http://tempuri.org/ is not marked nillable
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchPackingSlip", ReplyAction="*")]
         test.Svc.PurchPackingSlipResponse PurchPackingSlip(test.Svc.PurchPackingSlipRequest request);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchPackingSlip", ReplyAction="*")]
         System.Threading.Tasks.Task<test.Svc.PurchPackingSlipResponse> PurchPackingSlipAsync(test.Svc.PurchPackingSlipRequest request);
+        
+        // CODEGEN: Generating message contract since element name input from namespace http://tempuri.org/ is not marked nillable
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchCreditNoteByItem", ReplyAction="*")]
+        test.Svc.PurchCreditNoteByItemResponse PurchCreditNoteByItem(test.Svc.PurchCreditNoteByItemRequest request);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/PurchCreditNoteByItem", ReplyAction="*")]
+        System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> PurchCreditNoteByItemAsync(test.Svc.PurchCreditNoteByItemRequest request);
         
         // CODEGEN: Generating message contract since element name input from namespace http://tempuri.org/ is not marked nillable
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/InvTransferJournal", ReplyAction="*")]
@@ -70,74 +70,6 @@ namespace test.Svc {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/HelloWorld", ReplyAction="*")]
         System.Threading.Tasks.Task<test.Svc.HelloWorldResponse> HelloWorldAsync(test.Svc.HelloWorldRequest request);
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.ServiceModel.MessageContractAttribute(IsWrapped=false)]
-    public partial class PurchCreditNoteByItemRequest {
-        
-        [System.ServiceModel.MessageBodyMemberAttribute(Name="PurchCreditNoteByItem", Namespace="http://tempuri.org/", Order=0)]
-        public test.Svc.PurchCreditNoteByItemRequestBody Body;
-        
-        public PurchCreditNoteByItemRequest() {
-        }
-        
-        public PurchCreditNoteByItemRequest(test.Svc.PurchCreditNoteByItemRequestBody Body) {
-            this.Body = Body;
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.org/")]
-    public partial class PurchCreditNoteByItemRequestBody {
-        
-        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=0)]
-        public string input;
-        
-        public PurchCreditNoteByItemRequestBody() {
-        }
-        
-        public PurchCreditNoteByItemRequestBody(string input) {
-            this.input = input;
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.ServiceModel.MessageContractAttribute(IsWrapped=false)]
-    public partial class PurchCreditNoteByItemResponse {
-        
-        [System.ServiceModel.MessageBodyMemberAttribute(Name="PurchCreditNoteByItemResponse", Namespace="http://tempuri.org/", Order=0)]
-        public test.Svc.PurchCreditNoteByItemResponseBody Body;
-        
-        public PurchCreditNoteByItemResponse() {
-        }
-        
-        public PurchCreditNoteByItemResponse(test.Svc.PurchCreditNoteByItemResponseBody Body) {
-            this.Body = Body;
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.org/")]
-    public partial class PurchCreditNoteByItemResponseBody {
-        
-        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=0)]
-        public string PurchCreditNoteByItemResult;
-        
-        public PurchCreditNoteByItemResponseBody() {
-        }
-        
-        public PurchCreditNoteByItemResponseBody(string PurchCreditNoteByItemResult) {
-            this.PurchCreditNoteByItemResult = PurchCreditNoteByItemResult;
-        }
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -205,6 +137,74 @@ namespace test.Svc {
         
         public PurchPackingSlipResponseBody(string PurchPackingSlipResult) {
             this.PurchPackingSlipResult = PurchPackingSlipResult;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(IsWrapped=false)]
+    public partial class PurchCreditNoteByItemRequest {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Name="PurchCreditNoteByItem", Namespace="http://tempuri.org/", Order=0)]
+        public test.Svc.PurchCreditNoteByItemRequestBody Body;
+        
+        public PurchCreditNoteByItemRequest() {
+        }
+        
+        public PurchCreditNoteByItemRequest(test.Svc.PurchCreditNoteByItemRequestBody Body) {
+            this.Body = Body;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.org/")]
+    public partial class PurchCreditNoteByItemRequestBody {
+        
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=0)]
+        public string input;
+        
+        public PurchCreditNoteByItemRequestBody() {
+        }
+        
+        public PurchCreditNoteByItemRequestBody(string input) {
+            this.input = input;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(IsWrapped=false)]
+    public partial class PurchCreditNoteByItemResponse {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Name="PurchCreditNoteByItemResponse", Namespace="http://tempuri.org/", Order=0)]
+        public test.Svc.PurchCreditNoteByItemResponseBody Body;
+        
+        public PurchCreditNoteByItemResponse() {
+        }
+        
+        public PurchCreditNoteByItemResponse(test.Svc.PurchCreditNoteByItemResponseBody Body) {
+            this.Body = Body;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.org/")]
+    public partial class PurchCreditNoteByItemResponseBody {
+        
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=0)]
+        public string PurchCreditNoteByItemResult;
+        
+        public PurchCreditNoteByItemResponseBody() {
+        }
+        
+        public PurchCreditNoteByItemResponseBody(string PurchCreditNoteByItemResult) {
+            this.PurchCreditNoteByItemResult = PurchCreditNoteByItemResult;
         }
     }
     
@@ -644,31 +644,6 @@ namespace test.Svc {
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        test.Svc.PurchCreditNoteByItemResponse test.Svc.SvcSoap.PurchCreditNoteByItem(test.Svc.PurchCreditNoteByItemRequest request) {
-            return base.Channel.PurchCreditNoteByItem(request);
-        }
-        
-        public string PurchCreditNoteByItem(string input) {
-            test.Svc.PurchCreditNoteByItemRequest inValue = new test.Svc.PurchCreditNoteByItemRequest();
-            inValue.Body = new test.Svc.PurchCreditNoteByItemRequestBody();
-            inValue.Body.input = input;
-            test.Svc.PurchCreditNoteByItemResponse retVal = ((test.Svc.SvcSoap)(this)).PurchCreditNoteByItem(inValue);
-            return retVal.Body.PurchCreditNoteByItemResult;
-        }
-        
-        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> test.Svc.SvcSoap.PurchCreditNoteByItemAsync(test.Svc.PurchCreditNoteByItemRequest request) {
-            return base.Channel.PurchCreditNoteByItemAsync(request);
-        }
-        
-        public System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> PurchCreditNoteByItemAsync(string input) {
-            test.Svc.PurchCreditNoteByItemRequest inValue = new test.Svc.PurchCreditNoteByItemRequest();
-            inValue.Body = new test.Svc.PurchCreditNoteByItemRequestBody();
-            inValue.Body.input = input;
-            return ((test.Svc.SvcSoap)(this)).PurchCreditNoteByItemAsync(inValue);
-        }
-        
-        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         test.Svc.PurchPackingSlipResponse test.Svc.SvcSoap.PurchPackingSlip(test.Svc.PurchPackingSlipRequest request) {
             return base.Channel.PurchPackingSlip(request);
         }
@@ -691,6 +666,31 @@ namespace test.Svc {
             inValue.Body = new test.Svc.PurchPackingSlipRequestBody();
             inValue.Body.input = input;
             return ((test.Svc.SvcSoap)(this)).PurchPackingSlipAsync(inValue);
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        test.Svc.PurchCreditNoteByItemResponse test.Svc.SvcSoap.PurchCreditNoteByItem(test.Svc.PurchCreditNoteByItemRequest request) {
+            return base.Channel.PurchCreditNoteByItem(request);
+        }
+        
+        public string PurchCreditNoteByItem(string input) {
+            test.Svc.PurchCreditNoteByItemRequest inValue = new test.Svc.PurchCreditNoteByItemRequest();
+            inValue.Body = new test.Svc.PurchCreditNoteByItemRequestBody();
+            inValue.Body.input = input;
+            test.Svc.PurchCreditNoteByItemResponse retVal = ((test.Svc.SvcSoap)(this)).PurchCreditNoteByItem(inValue);
+            return retVal.Body.PurchCreditNoteByItemResult;
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> test.Svc.SvcSoap.PurchCreditNoteByItemAsync(test.Svc.PurchCreditNoteByItemRequest request) {
+            return base.Channel.PurchCreditNoteByItemAsync(request);
+        }
+        
+        public System.Threading.Tasks.Task<test.Svc.PurchCreditNoteByItemResponse> PurchCreditNoteByItemAsync(string input) {
+            test.Svc.PurchCreditNoteByItemRequest inValue = new test.Svc.PurchCreditNoteByItemRequest();
+            inValue.Body = new test.Svc.PurchCreditNoteByItemRequestBody();
+            inValue.Body.input = input;
+            return ((test.Svc.SvcSoap)(this)).PurchCreditNoteByItemAsync(inValue);
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]

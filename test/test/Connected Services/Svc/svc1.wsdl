@@ -2,20 +2,6 @@
 <wsdl:definitions xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
   <wsdl:types>
     <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
-      <s:element name="PurchCreditNoteByItem">
-        <s:complexType>
-          <s:sequence>
-            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
-          </s:sequence>
-        </s:complexType>
-      </s:element>
-      <s:element name="PurchCreditNoteByItemResponse">
-        <s:complexType>
-          <s:sequence>
-            <s:element minOccurs="0" maxOccurs="1" name="PurchCreditNoteByItemResult" type="s:string" />
-          </s:sequence>
-        </s:complexType>
-      </s:element>
       <s:element name="PurchPackingSlip">
         <s:complexType>
           <s:sequence>
@@ -27,6 +13,20 @@
         <s:complexType>
           <s:sequence>
             <s:element minOccurs="0" maxOccurs="1" name="PurchPackingSlipResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="PurchCreditNoteByItem">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="input" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="PurchCreditNoteByItemResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="PurchCreditNoteByItemResult" type="s:string" />
           </s:sequence>
         </s:complexType>
       </s:element>
@@ -116,17 +116,17 @@
       </s:element>
     </s:schema>
   </wsdl:types>
-  <wsdl:message name="PurchCreditNoteByItemSoapIn">
-    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItem" />
-  </wsdl:message>
-  <wsdl:message name="PurchCreditNoteByItemSoapOut">
-    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItemResponse" />
-  </wsdl:message>
   <wsdl:message name="PurchPackingSlipSoapIn">
     <wsdl:part name="parameters" element="tns:PurchPackingSlip" />
   </wsdl:message>
   <wsdl:message name="PurchPackingSlipSoapOut">
     <wsdl:part name="parameters" element="tns:PurchPackingSlipResponse" />
+  </wsdl:message>
+  <wsdl:message name="PurchCreditNoteByItemSoapIn">
+    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItem" />
+  </wsdl:message>
+  <wsdl:message name="PurchCreditNoteByItemSoapOut">
+    <wsdl:part name="parameters" element="tns:PurchCreditNoteByItemResponse" />
   </wsdl:message>
   <wsdl:message name="InvTransferJournalSoapIn">
     <wsdl:part name="parameters" element="tns:InvTransferJournal" />
@@ -165,13 +165,13 @@
     <wsdl:part name="parameters" element="tns:HelloWorldResponse" />
   </wsdl:message>
   <wsdl:portType name="SvcSoap">
-    <wsdl:operation name="PurchCreditNoteByItem">
-      <wsdl:input message="tns:PurchCreditNoteByItemSoapIn" />
-      <wsdl:output message="tns:PurchCreditNoteByItemSoapOut" />
-    </wsdl:operation>
     <wsdl:operation name="PurchPackingSlip">
       <wsdl:input message="tns:PurchPackingSlipSoapIn" />
       <wsdl:output message="tns:PurchPackingSlipSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <wsdl:input message="tns:PurchCreditNoteByItemSoapIn" />
+      <wsdl:output message="tns:PurchCreditNoteByItemSoapOut" />
     </wsdl:operation>
     <wsdl:operation name="InvTransferJournal">
       <wsdl:input message="tns:InvTransferJournalSoapIn" />
@@ -200,8 +200,8 @@
   </wsdl:portType>
   <wsdl:binding name="SvcSoap" type="tns:SvcSoap">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
-    <wsdl:operation name="PurchCreditNoteByItem">
-      <soap:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
+    <wsdl:operation name="PurchPackingSlip">
+      <soap:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -209,8 +209,8 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="PurchPackingSlip">
-      <soap:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <soap:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -275,8 +275,8 @@
   </wsdl:binding>
   <wsdl:binding name="SvcSoap12" type="tns:SvcSoap">
     <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
-    <wsdl:operation name="PurchCreditNoteByItem">
-      <soap12:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
+    <wsdl:operation name="PurchPackingSlip">
+      <soap12:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
       <wsdl:input>
         <soap12:body use="literal" />
       </wsdl:input>
@@ -284,8 +284,8 @@
         <soap12:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="PurchPackingSlip">
-      <soap12:operation soapAction="http://tempuri.org/PurchPackingSlip" style="document" />
+    <wsdl:operation name="PurchCreditNoteByItem">
+      <soap12:operation soapAction="http://tempuri.org/PurchCreditNoteByItem" style="document" />
       <wsdl:input>
         <soap12:body use="literal" />
       </wsdl:input>
@@ -350,10 +350,10 @@
   </wsdl:binding>
   <wsdl:service name="Svc">
     <wsdl:port name="SvcSoap" binding="tns:SvcSoap">
-      <soap:address location="http://cgtc-wms01.cgt.local/Interface/Svc.asmx" />
+      <soap:address location="http://localhost/Interface/svc.asmx" />
     </wsdl:port>
     <wsdl:port name="SvcSoap12" binding="tns:SvcSoap12">
-      <soap12:address location="http://cgtc-wms01.cgt.local/Interface/Svc.asmx" />
+      <soap12:address location="http://localhost/Interface/svc.asmx" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

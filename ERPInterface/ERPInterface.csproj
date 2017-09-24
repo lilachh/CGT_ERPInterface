@@ -80,7 +80,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Svc.asmx" />
-    <Content Include="TestForm.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -104,13 +103,6 @@
     <Compile Include="Svc.asmx.cs">
       <DependentUpon>Svc.asmx</DependentUpon>
       <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="TestForm.aspx.cs">
-      <DependentUpon>TestForm.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="TestForm.aspx.designer.cs">
-      <DependentUpon>TestForm.aspx</DependentUpon>
     </Compile>
     <Compile Include="Utility.cs" />
   </ItemGroup>

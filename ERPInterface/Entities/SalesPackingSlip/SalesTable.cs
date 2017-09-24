@@ -9,5 +9,7 @@ namespace ERPInterface.Entities
     {
         public string SalesId { get; set; }
         public List<SalesLine> LstSalesLine { get; set; }
+        public string ShipmentId { get; set; }
+        public string DateYMD { get; set; }
     }
 }

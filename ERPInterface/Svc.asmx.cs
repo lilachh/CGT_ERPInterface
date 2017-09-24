@@ -19,6 +19,80 @@ namespace ERPInterface
     // [System.Web.Script.Services.ScriptService]
     public class Svc : System.Web.Services.WebService   
     {
+
+        [WebMethod]
+        public string PurchPackingSlip(string input)
+        {
+            Log.Info("PurchPackingSlip");
+            Log.Info(input);
+            string ret = "";
+            string purchId = "";
+            Axapta ax = new Axapta();
+            try
+            {
+                // 1.0 get parameters
+                PurchTable pt = (PurchTable)Utility.XmlDeserializeFromString(input, typeof(PurchTable));
+                purchId = pt.PurchId;
+                if (pt.Receive)
+                {
+                    #region Log on 
+                    ax.Logon();
+                    
+                    // 2.0 update purchline registered
+                    foreach (PurchLine pl in pt.LstPurchLine)
+                    {
+                        InventDim dim = pl.InventDim;
+                        IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+                        inventDim.field["InventLocationId"] = dim.InventLocationId;
+                        inventDim.field["inventBatchId"] = dim.inventBatchId;
+                        inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+                        inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+                        inventDim.field["inventSerialId"] = dim.inventSerialId;
+                        //inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+                        inventDim = ax.CallStaticClassMethod("WMS_Utility", "Svc_InventDim", pl.ItemId, inventDim);
+                        string inventDimId = inventDim.field["inventDimId"];                         
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                            ,pl.ItemId, inventDimId);
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
+                            , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
+                    }
+                    // 3.0 create packingslip parm
+                    // DocumentStatus::PackingSlip = 5
+                    IAxaptaObject purchFormLetter =
+                        ax.CallStaticClassMethod("PurchFormLetter", "construct", 5) as IAxaptaObject;
+                    IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
+                    purchTable.ExecuteStmt(string.Format(
+                            "select forupdate * from %1 where %1.PurchId =='{0}'"
+                            , pt.PurchId));
+                    // 4.0 post packingslip               
+                    DateTime sessionDate = new DateTime(int.Parse(pt.DateYMD.Substring(0, 4))
+                        , int.Parse(pt.DateYMD.Substring(4, 2))
+                        , int.Parse(pt.DateYMD.Substring(6, 2)));
+                    //PurchUpdate::Recorded = 2
+                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 2);             
+                    #endregion
+                }
+                else
+                {
+                    ret = PurchCreditNote(input);
+                }
+            }
+            catch (Exception ex)
+            {
+                ret = ex.Message;
+                Log.Error(ex.Message);
+                Log.Error(ex.StackTrace);
+                Log.Error(input);
+                //roll back
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId);
+            }
+            finally
+            {
+                ax.Logoff();
+            }
+            return Utility.XmlResult(ret);
+        }
+
         [WebMethod]
         public string PurchCreditNoteByItem(string input)
         {
@@ -58,9 +132,12 @@ namespace ERPInterface
                         , purchId));
                 try
                 {
-                    // 4.0 post packingslip               
+                    // 4.0 post packingslip   
+                    DateTime sessionDate = new DateTime(int.Parse(pt.DateYMD.Substring(0, 4))
+                        , int.Parse(pt.DateYMD.Substring(4, 2))
+                        , int.Parse(pt.DateYMD.Substring(6, 2)));
                     //PurchUpdate::ReceiveNow = 0
-                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
+                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 0);
                 }
                 catch (Exception ex)
                 {
@@ -107,10 +184,10 @@ namespace ERPInterface
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                     string inventDimId = inventDim.field["inventDimId"];
                     IAxaptaRecord axRecord = ax.CreateRecord("PurchLine");
-                    
+
                     string stmt = string.Format(
                         "select forupdate * from %1 where %1.PurchId =='{0}' && %1.LineNum == {1}"
-                        ,pt.PurchId,pl.LineNum);
+                        , pt.PurchId, pl.LineNum);
                     axRecord.ExecuteStmt(stmt);
                     axRecord.field["PurchReceivedNow"] = pl.Qty;
                     axRecord.field["inventDimId"] = inventDimId;
@@ -120,15 +197,18 @@ namespace ERPInterface
                 ax.TTSCommit();
                 // 3.0 create packingslip parm
                 // DocumentStatus::PackingSlip = 5
-                IAxaptaObject purchFormLetter = 
-                    ax.CallStaticClassMethod("PurchFormLetter", "construct",5) as IAxaptaObject;
+                IAxaptaObject purchFormLetter =
+                    ax.CallStaticClassMethod("PurchFormLetter", "construct", 5) as IAxaptaObject;
                 IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
                 purchTable.ExecuteStmt(string.Format(
                         "select forupdate * from %1 where %1.PurchId =='{0}'"
                         , pt.PurchId));
-                // 4.0 post packingslip               
+                // 4.0 post packingslip    
+                DateTime sessionDate = new DateTime(int.Parse(pt.DateYMD.Substring(0, 4))
+                        , int.Parse(pt.DateYMD.Substring(4, 2))
+                        , int.Parse(pt.DateYMD.Substring(6, 2)));
                 //PurchUpdate::ReceiveNow = 0
-                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 0);
+                purchFormLetter.Call("update", purchTable, pt.PackingSlipId, sessionDate, 0);
                 #endregion
             }
             catch (Exception ex)
@@ -147,75 +227,6 @@ namespace ERPInterface
         }
 
         [WebMethod]
-        public string PurchPackingSlip(string input)
-        {
-            Log.Info("PurchPackingSlip");
-            Log.Info(input);
-            string ret = "";
-            string purchId = "";
-            Axapta ax = new Axapta();
-            try
-            {
-                // 1.0 get parameters
-                PurchTable pt = (PurchTable)Utility.XmlDeserializeFromString(input, typeof(PurchTable));
-                purchId = pt.PurchId;
-                if (pt.Receive)
-                {
-                    #region Log on 
-                    ax.Logon();
-                    // 2.0 update purchline registered
-                    foreach (PurchLine pl in pt.LstPurchLine)
-                    {
-                        InventDim dim = pl.InventDim;
-                        IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
-                        inventDim.field["InventLocationId"] = dim.InventLocationId;
-                        inventDim.field["inventBatchId"] = dim.inventBatchId;
-                        inventDim.field["wMsLocationId"] = dim.wMsLocationId;
-                        inventDim.field["wMSPalletId"] = dim.wMSPalletId;
-                        inventDim.field["inventSerialId"] = dim.inventSerialId;
-                        //inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
-                        inventDim = ax.CallStaticClassMethod("WMS_Utility", "Svc_InventDim", pl.ItemId, inventDim);
-                        string inventDimId = inventDim.field["inventDimId"];                         
-                        ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
-                            ,pl.ItemId, inventDimId);
-                        ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
-                            , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
-                    }
-                    // 3.0 create packingslip parm
-                    // DocumentStatus::PackingSlip = 5
-                    IAxaptaObject purchFormLetter =
-                        ax.CallStaticClassMethod("PurchFormLetter", "construct", 5) as IAxaptaObject;
-                    IAxaptaRecord purchTable = ax.CreateRecord("PurchTable");
-                    purchTable.ExecuteStmt(string.Format(
-                            "select forupdate * from %1 where %1.PurchId =='{0}'"
-                            , pt.PurchId));
-                    // 4.0 post packingslip               
-                    //PurchUpdate::Recorded = 2
-                    purchFormLetter.Call("update", purchTable, pt.PackingSlipId, DateTime.Now, 2);             
-                    #endregion
-                }
-                else
-                {
-                    ret = PurchCreditNote(input);
-                }
-            }
-            catch (Exception ex)
-            {
-                ret = ex.Message;
-                Log.Error(ex.Message);
-                Log.Error(ex.StackTrace);
-                Log.Error(input);
-                //roll back
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId);
-            }
-            finally
-            {
-                ax.Logoff();
-            }
-            return Utility.XmlResult(ret);
-        }
-
-        [WebMethod]
         public string InvTransferJournal(string input)
         {
             Log.Info("InvTransferJournal");
@@ -226,6 +237,9 @@ namespace ERPInterface
             {
                 InvJournalTable jt = 
                     (InvJournalTable)Utility.XmlDeserializeFromString(input, typeof(InvJournalTable));
+                DateTime sessionDate = new DateTime(int.Parse(jt.DateYMD.Substring(0, 4))
+                    , int.Parse(jt.DateYMD.Substring(4, 2))
+                    , int.Parse(jt.DateYMD.Substring(6, 2)));
                 ax.Logon();
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName","find", "ITrf");
@@ -272,7 +286,8 @@ namespace ERPInterface
                         , inventJournalTable.field["JournalId"]
                         , jl.ItemId, jl.Qty
                         , inventDimF.field["inventDimId"]
-                        , inventDimT.field["inventDimId"]);
+                        , inventDimT.field["inventDimId"]
+                        , sessionDate);
                 }
                 try
                 {
@@ -315,6 +330,9 @@ namespace ERPInterface
             {
                 InvMovementTable jt =
                   (InvMovementTable)Utility.XmlDeserializeFromString(input, typeof(InvMovementTable));
+                DateTime sessionDate = new DateTime(int.Parse(jt.DateYMD.Substring(0, 4))
+                    , int.Parse(jt.DateYMD.Substring(4, 2))
+                    , int.Parse(jt.DateYMD.Substring(6, 2)));
                 ax.Logon();
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", jt.MovementType);
@@ -344,7 +362,8 @@ namespace ERPInterface
                         , inventJournalTable.field["JournalId"]
                         , jl.ItemId, jl.Qty
                         , inventDim.field["inventDimId"]
-                        , jl.OffsetAccount);
+                        , jl.OffsetAccount
+                        , sessionDate);
                 }
 
                 try
@@ -376,56 +395,6 @@ namespace ERPInterface
             return Utility.XmlResult(ret);
         }
 
-        /*
-        [WebMethod]
-        protected string Del_SalesPackingSlip(string input)
-        {
-            string ret = "";
-            Axapta ax = new Axapta();
-            try
-            {
-                SalesShipmentTable st =
-                    (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
-                ax.Logon();
-                //1.0 WMSOrderTransReservation
-                foreach (SalesShipmentLine sl in st.LstShipmentLine)
-                {
-                    InventDim dim = sl.InventDim;
-                    IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
-                    inventDim.field["InventLocationId"] = dim.InventLocationId;
-                    inventDim.field["inventBatchId"] = dim.inventBatchId;
-                    inventDim.field["wMsLocationId"] = dim.wMsLocationId;
-                    inventDim.field["wMSPalletId"] = dim.wMSPalletId;
-                    inventDim.field["inventSerialId"] = dim.inventSerialId;
-                    inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
-                    IAxaptaRecord WMSOrderTrans = ax.CreateRecord("WMSOrderTrans");
-                    WMSOrderTrans.ExecuteStmt(string.Format(
-                        "select * from %1 where %1.shipmentId =='{0}' && %1.orderId == '{1}' && %1.expeditionStatus != WMSexpeditionStatus::Reserved"
-                        , st.ShipmentId, sl.InvOutPutOrder));
-                    if (WMSOrderTrans.field["RecId"] != 0)
-                    {
-
-                        ax.CallStaticClassMethod("WMS_Utility"
-                                , "Svc_WMSOrderTransReservationQty"
-                                , WMSOrderTrans.field["RecId"], inventDim.field["inventDimId"], sl.Qty);
-                    }
-                }
-                //2.0 WMSShipmentFinished & SalesPackingSlip
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSShipmentFinished", st.ShipmentId);
-            }
-            catch (Exception ex)
-            {
-                ax.TTSAbort();
-                ret = ex.Message;
-            }
-            finally
-            {
-                ax.Logoff();
-            }
-            return Utility.XmlResult(ret);
-        }
-        */
-
         [WebMethod]
         public string SalesPackingSlip(string input)
         {
@@ -437,6 +406,9 @@ namespace ERPInterface
             string packingslipId = "";
             SalesShipmentTable st =
                 (SalesShipmentTable)Utility.XmlDeserializeFromString(input, typeof(SalesShipmentTable));
+            DateTime sessionDate = new DateTime(int.Parse(st.DateYMD.Substring(0, 4))
+                , int.Parse(st.DateYMD.Substring(4, 2))
+                , int.Parse(st.DateYMD.Substring(6, 2)));
             List<string> lstSO = st.LstShipmentLine.Select(p => p.SalesId).ToList();
             lstSO = lstSO.Distinct().ToList();
             if (st.ShipmentId == "" || st.ShipmentId == null)
@@ -461,7 +433,7 @@ namespace ERPInterface
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesLineReservation", sl.LineId, inventDimId, sl.Qty);
                 }
                 //3.0 SalesPackingSlip
-                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlipByMultiSO", strSO,st.ShipmentId);
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlipByMultiSO", strSO,st.ShipmentId, sessionDate);
                 if (packingslipId == "")
                 {
                     throw new Exception("Post Sales Packing Slip failed!");
@@ -489,17 +461,6 @@ namespace ERPInterface
             return Utility.XmlResult(ret, packingslipId);
         }
 
-        private string GetInventDimId(InventDim dim, Axapta ax)
-        {
-            IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
-            inventDim.field["InventLocationId"] = dim.InventLocationId;
-            inventDim.field["inventBatchId"] = dim.inventBatchId;
-            inventDim.field["wMsLocationId"] = dim.wMsLocationId;
-            inventDim.field["wMSPalletId"] = dim.wMSPalletId;
-            inventDim.field["inventSerialId"] = dim.inventSerialId;
-            inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
-            return inventDim.field["inventDimId"];
-        }
         [WebMethod]
         public string SalesCreditNote(string input)
         {
@@ -512,6 +473,9 @@ namespace ERPInterface
             {
                 SalesTable st = 
                     (SalesTable)Utility.XmlDeserializeFromString(input, typeof(SalesTable));
+                DateTime sessionDate = new DateTime(int.Parse(st.DateYMD.Substring(0, 4))
+                    , int.Parse(st.DateYMD.Substring(4, 2))
+                    , int.Parse(st.DateYMD.Substring(6, 2)));
                 ax.Logon();
                 ax.TTSBegin();
                 foreach (SalesLine sl in st.LstSalesLine)
@@ -537,7 +501,7 @@ namespace ERPInterface
                 }
                 ax.TTSCommit();
                 // SalesUpdate::DeliverNow = 0
-                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0);
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0,st.ShipmentId, sessionDate);
                 if (packingslipId == "")
                 {
                     throw new Exception("Post Sales Packing Slip failed!");
@@ -569,6 +533,9 @@ namespace ERPInterface
             {
                 InvCountTable jt =
                   (InvCountTable)Utility.XmlDeserializeFromString(input, typeof(InvCountTable));
+                DateTime sessionDate = new DateTime(int.Parse(jt.DateYMD.Substring(0, 4))
+                    , int.Parse(jt.DateYMD.Substring(4, 2))
+                    , int.Parse(jt.DateYMD.Substring(6, 2)));
                 ax.Logon();
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", "ICnt");
@@ -598,6 +565,7 @@ namespace ERPInterface
                         , inventJournalTable.field["JournalId"]
                         , jl.ItemId, jl.Qty
                         , inventDim.field["inventDimId"]
+                        , sessionDate
                         );
                 }
                 try
@@ -626,6 +594,18 @@ namespace ERPInterface
                 ax.Logoff();
             }
             return Utility.XmlResult(ret);
+        }
+        
+        private string GetInventDimId(InventDim dim, Axapta ax)
+        {
+            IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
+            inventDim.field["InventLocationId"] = dim.InventLocationId;
+            inventDim.field["inventBatchId"] = dim.inventBatchId;
+            inventDim.field["wMsLocationId"] = dim.wMsLocationId;
+            inventDim.field["wMSPalletId"] = dim.wMSPalletId;
+            inventDim.field["inventSerialId"] = dim.inventSerialId;
+            inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
+            return inventDim.field["inventDimId"];
         }
 
         #region Test
