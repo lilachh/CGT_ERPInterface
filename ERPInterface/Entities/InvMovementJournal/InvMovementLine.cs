@@ -11,5 +11,6 @@ namespace ERPInterface.Entities
         public decimal Qty { get; set; }
         public InventDim InventDim { get; set; }
         public string OffsetAccount { get; set; }
+        public string Department { get; set; }
     }
 }

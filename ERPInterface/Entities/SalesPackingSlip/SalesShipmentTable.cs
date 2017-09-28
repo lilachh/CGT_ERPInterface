@@ -12,4 +12,12 @@ namespace ERPInterface.Entities
         public List<SalesShipmentLine> LstShipmentLine { get; set; }
         public string DateYMD { get; set; }
     }
+
+    //public class SalesShipmentTable
+    //{
+    //    public string ShipmentId { get; set; }
+    //    //public string EmpId { get; set; }
+    //    public List<SalesShipmentLine> LstShipmentLine { get; set; }
+        
+    //}
 }
