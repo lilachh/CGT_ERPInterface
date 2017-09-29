@@ -224,7 +224,7 @@ namespace ERPInterface
                     //axRecord.field["inventDimId"] = inventDimId;
                     //axRecord.Call("setInventReceivedNow");
                     //axRecord.DoUpdate();
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchLineReservation", pt.PurchId, pl.LineNum, inventDimId,-1 * pl.Qty);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchLineReservation", pt.PurchId, pl.LineNum, inventDimId,pl.Qty);
                 }
                 ax.TTSCommit();
                 // 3.0 create packingslip parm
@@ -249,7 +249,7 @@ namespace ERPInterface
                 string packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PostPurchPackingSlip",pt.PurchId, "ReceiveNow",pt.PackingSlipId, sessionDate);
                 if (packingslipId != pt.PackingSlipId)
                 {
-                    return packingslipId;
+                    throw new Exception(packingslipId);
                 }
                 #endregion
             }
@@ -530,15 +530,18 @@ namespace ERPInterface
             Log.Info(input);
             string ret = "";
             string packingslipId = "";
+            string salesId = "";
             Axapta ax = new Axapta();
             try
             {
                 SalesTable st = 
                     (SalesTable)Utility.XmlDeserializeFromString(input, typeof(SalesTable));
+                salesId = st.SalesId;
                 DateTime sessionDate = new DateTime(int.Parse(st.DateYMD.Substring(0, 4))
                     , int.Parse(st.DateYMD.Substring(4, 2))
                     , int.Parse(st.DateYMD.Substring(6, 2)));
                 ax.Logon();
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_UnRegister", st.SalesId);
                 ax.TTSBegin();
                 foreach (SalesLine sl in st.LstSalesLine)
                 {
@@ -552,26 +555,24 @@ namespace ERPInterface
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
                        , sl.ItemId, inventDim.field["inventDimId"]);
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_Register",st.SalesId,sl.LineNum,sl.Qty, inventDim.field["inventDimId"]); 
                     IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
                     SalesLine.ExecuteStmt(string.Format(
                         "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
                         , st.SalesId, sl.LineNum));
-                    SalesLine.field["SalesDeliverNow"] = -1 * sl.Qty;
+                    SalesLine.field["SalesDeliverNow"] = Convert.ToDouble(-1 * sl.Qty) + (double)SalesLine.field["SalesDeliverNow"];
                     SalesLine.field["inventDimId"] = inventDim.field["inventDimId"];
                     SalesLine.Call("setInventDeliverNow");
                     SalesLine.DoUpdate();
                 }
                 ax.TTSCommit();
                 // SalesUpdate::DeliverNow = 0
-                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0,st.ShipmentId, sessionDate);
-                if (packingslipId == "")
-                {
-                    throw new Exception("Post Sales Packing Slip failed!");
-                }
+                packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesPackingSlip",st.SalesId,0,st.ShipmentId, sessionDate);       
             }
             catch (Exception ex)
             {
                 ax.TTSAbort();
+                ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_UnRegister", salesId);
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
