@@ -53,6 +53,10 @@ namespace ERPInterface
                     foreach (PurchLine pl in pt.LstPurchLine)
                     {
                         InventDim dim = pl.InventDim;
+                        if (dim.wMsLocationId == "")
+                        {
+                            throw new Exception("XML parameter wMsLocationId is mandatory!");
+                        }
                         IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                         inventDim.field["InventLocationId"] = dim.InventLocationId;
                         inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -135,6 +139,10 @@ namespace ERPInterface
                 string oriLineId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchCreditFetchLine"
                                                             , pt.PurchId, pt.ItemId,pt.InventDim.inventSerialId);
                 InventDim dim = pt.InventDim;
+                if (dim.wMsLocationId == "")
+                {
+                    throw new Exception("XML parameter wMsLocationId is mandatory!");
+                }
                 IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                 inventDim.field["InventLocationId"] = dim.InventLocationId;
                 inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -206,6 +214,10 @@ namespace ERPInterface
                 foreach (PurchLine pl in pt.LstPurchLine)
                 {
                     InventDim dim = pl.InventDim;
+                    if (dim.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                     inventDim.field["InventLocationId"] = dim.InventLocationId;
                     inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -298,19 +310,25 @@ namespace ERPInterface
                 {
                     #region get invent dim
                     InventDim dimF = jl.InventDimFrom;
+                    if (dimF.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDimF = ax.CreateRecord("InventDim");
                     inventDimF.field["InventLocationId"] = dimF.InventLocationId;
                     inventDimF.field["inventBatchId"] = dimF.inventBatchId;
                     inventDimF.field["wMsLocationId"] = dimF.wMsLocationId;
                     inventDimF.field["wMSPalletId"] = dimF.wMSPalletId;
                     inventDimF.field["inventSerialId"] = dimF.inventSerialId;
-                    inventDimF = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimF);
+                    inventDimF = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDimF);                    
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
                         ,jl.ItemId
                         , inventDimF.field["inventDimId"]);
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
-                        , jl.ItemId, inventDimF.field["inventDimId"]);
                     InventDim dimT = jl.InventDimTo;
+                    if (dimT.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDimT = ax.CreateRecord("InventDim");
                     inventDimT.field["InventLocationId"] = dimT.InventLocationId;
                     inventDimT.field["inventBatchId"] = dimT.inventBatchId;
@@ -321,8 +339,6 @@ namespace ERPInterface
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
                         , jl.ItemId
                         , inventDimT.field["inventDimId"]);
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
-                       , jl.ItemId, inventDimT.field["inventDimId"]);
                     #endregion
 
                     ax.CallStaticClassMethod(
@@ -393,6 +409,10 @@ namespace ERPInterface
                 {
                     #region get invent dim
                     InventDim dim = jl.InventDim;
+                    if (dim.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                     inventDim.field["InventLocationId"] = dim.InventLocationId;
                     inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -486,6 +506,10 @@ namespace ERPInterface
                 //2.0 Reservation
                 foreach (SalesShipmentLine sl in st.LstShipmentLine)
                 {
+                    if (sl.InventDim.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     string inventDimId = GetInventDimId(sl.InventDim, ax);
                     IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesLineReservation", sl.LineId, inventDimId, sl.Qty);
@@ -546,6 +570,10 @@ namespace ERPInterface
                 foreach (SalesLine sl in st.LstSalesLine)
                 {
                     InventDim dim = sl.InventDim;
+                    if (dim.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                     inventDim.field["InventLocationId"] = dim.InventLocationId;
                     inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -614,6 +642,10 @@ namespace ERPInterface
                 {
                     #region get invent dim
                     InventDim dim = jl.InventDim;
+                    if (dim.wMsLocationId == "")
+                    {
+                        throw new Exception("XML parameter wMsLocationId is mandatory!");
+                    }
                     IAxaptaRecord inventDim = ax.CreateRecord("InventDim");
                     inventDim.field["InventLocationId"] = dim.InventLocationId;
                     inventDim.field["inventBatchId"] = dim.inventBatchId;
@@ -672,6 +704,40 @@ namespace ERPInterface
             inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
             return inventDim.field["inventDimId"];
         }
+
+        //private void ValidateInventDim(InventDim dim, string wh, string location, string pallet, string serial, string batch)
+        //{
+        //    if (dim.InventLocationId != wh)
+        //    {
+        //        throw new Exception(String.Format("InventDim parameter : {0} not exist in AX; default : {1}"
+        //            , dim.InventLocationId
+        //            , wh));
+        //    }
+        //    if (dim.wMsLocationId != location)
+        //    {
+        //        throw new Exception(String.Format("InventDim parameter : {0} not exist in AX; default : {1}"
+        //            , dim.wMsLocationId
+        //            , location));
+        //    }
+        //    if (dim.wMSPalletId != pallet)
+        //    {
+        //        throw new Exception(String.Format("InventDim parameter : {0} not exist in AX; default : {1}"
+        //            , dim.wMSPalletId
+        //            , pallet));
+        //    }
+        //    if (dim.inventSerialId != serial)
+        //    {
+        //        throw new Exception(String.Format("InventDim parameter : {0} not exist in AX; default : {1}"
+        //            , dim.inventSerialId
+        //            , serial));
+        //    }
+        //    if (dim.inventBatchId != batch)
+        //    {
+        //        throw new Exception(String.Format("InventDim parameter : {0} not exist in AX; default : {1}"
+        //            , dim.inventBatchId
+        //            , batch));
+        //    }
+        //}
 
         #region Test
         [WebMethod]
