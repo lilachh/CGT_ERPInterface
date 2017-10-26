@@ -288,6 +288,8 @@ namespace ERPInterface
             Log.Info(input);
             string ret = "";
             string jourId = "";
+            string inProcess = "";
+            string description = "";
             Axapta ax = new Axapta();
             try
             {
@@ -296,7 +298,12 @@ namespace ERPInterface
                 DateTime sessionDate = new DateTime(int.Parse(jt.DateYMD.Substring(0, 4))
                     , int.Parse(jt.DateYMD.Substring(4, 2))
                     , int.Parse(jt.DateYMD.Substring(6, 2)));
+                description = jt.Description;
                 ax.Logon();
+                if (description != "")
+                {
+                    inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName","find", "ITrf");
                 IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");
@@ -387,6 +394,8 @@ namespace ERPInterface
             Log.Info(input);
             string ret = "";
             string jourId = "";
+            string inProcess = "";
+            string description = "";
             Axapta ax = new Axapta();
             try
             {
@@ -395,7 +404,12 @@ namespace ERPInterface
                 DateTime sessionDate = new DateTime(int.Parse(jt.DateYMD.Substring(0, 4))
                     , int.Parse(jt.DateYMD.Substring(4, 2))
                     , int.Parse(jt.DateYMD.Substring(6, 2)));
+                description = jt.Description;
                 ax.Logon();
+                if (description != "")
+                {
+                    inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", jt.MovementType);
                 IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");                
@@ -555,6 +569,8 @@ namespace ERPInterface
             string ret = "";
             string packingslipId = "";
             string salesId = "";
+            string inProcess = "";
+            string shipmentId = "";
             Axapta ax = new Axapta();
             try
             {
@@ -565,6 +581,8 @@ namespace ERPInterface
                     , int.Parse(st.DateYMD.Substring(4, 2))
                     , int.Parse(st.DateYMD.Substring(6, 2)));
                 ax.Logon();
+                shipmentId = st.ShipmentId;
+                inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", shipmentId);
                 ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_UnRegister", st.SalesId);
                 ax.TTSBegin();
                 foreach (SalesLine sl in st.LstSalesLine)
@@ -584,14 +602,15 @@ namespace ERPInterface
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
                        , sl.ItemId, inventDim.field["inventDimId"]);
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_Register",st.SalesId,sl.LineNum,sl.Qty, inventDim.field["inventDimId"]); 
-                    IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
-                    SalesLine.ExecuteStmt(string.Format(
-                        "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
-                        , st.SalesId, sl.LineNum));
-                    SalesLine.field["SalesDeliverNow"] = Convert.ToDouble(-1 * sl.Qty) + (double)SalesLine.field["SalesDeliverNow"];
-                    SalesLine.field["inventDimId"] = inventDim.field["inventDimId"];
-                    SalesLine.Call("setInventDeliverNow");
-                    SalesLine.DoUpdate();
+                    //IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
+                    //SalesLine.ExecuteStmt(string.Format(
+                    //    "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
+                    //    , st.SalesId, sl.LineNum));
+                    ////SalesLine.field["SalesDeliverNow"] = Convert.ToDouble(-1 * sl.Qty) + (double)SalesLine.field["SalesDeliverNow"];
+                    //SalesLine.field["inventDeliverNow"] = Convert.ToDouble(-1 * sl.Qty) + (double)SalesLine.field["inventDeliverNow"];
+                    //SalesLine.field["inventDimId"] = inventDim.field["inventDimId"];
+                    //SalesLine.Call("setInventDeliverNow");
+                    //SalesLine.DoUpdate();
                 }
                 ax.TTSCommit();
                 // SalesUpdate::DeliverNow = 0
@@ -599,8 +618,11 @@ namespace ERPInterface
             }
             catch (Exception ex)
             {
+                if (inProcess == "")
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_UnRegister", salesId);
+                }
                 ax.TTSAbort();
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_UnRegister", salesId);
                 ret = ex.Message;
                 Log.Error(ex.Message);
                 Log.Error(ex.StackTrace);
@@ -620,6 +642,8 @@ namespace ERPInterface
             Log.Info(input);
             string ret = "";
             string jourId = "";
+            string inProcess = "";
+            string description = "";
             Axapta ax = new Axapta();
             try
             {
@@ -629,6 +653,10 @@ namespace ERPInterface
                     , int.Parse(jt.DateYMD.Substring(4, 2))
                     , int.Parse(jt.DateYMD.Substring(6, 2)));
                 ax.Logon();
+                if (description != "")
+                {
+                    inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", "ICnt");
                 IAxaptaRecord inventJournalTable = ax.CreateRecord("InventJournalTable");
@@ -665,19 +693,19 @@ namespace ERPInterface
                         , sessionDate
                         );
                 }
-                try
-                {
-                    //3.0 post journal
-                    ax.CallStaticClassMethod(
-                            "WMS_Utility"
-                            , "Svc_PostInventoryJournal"
-                            , inventJournalTable.field["JournalId"]);
-                }
-                catch (Exception ex)
-                {
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
-                    throw ex;
-                }
+                //try
+                //{
+                //    //3.0 post journal
+                //    ax.CallStaticClassMethod(
+                //            "WMS_Utility"
+                //            , "Svc_PostInventoryJournal"
+                //            , inventJournalTable.field["JournalId"]);
+                //}
+                //catch (Exception ex)
+                //{
+                //    ax.CallStaticClassMethod("WMS_Utility", "Svc_DeleteInventoryJournal", inventJournalTable.field["JournalId"]);
+                //    throw ex;
+                //}
             }
             catch (Exception ex)
             {
