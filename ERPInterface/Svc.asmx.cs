@@ -31,6 +31,7 @@ namespace ERPInterface
             string packingslipId = "";
             string inProcess = "";
             string shipmentId = "";
+            bool isReceive = true;
             Axapta ax = new Axapta();
             try
             {
@@ -43,6 +44,7 @@ namespace ERPInterface
                     ret = "PackingSlipId con't be null.";
                     return Utility.XmlResult(ret);
                 }
+                isReceive = pt.Receive;
                 if (pt.Receive)
                 {
                     #region Log on 
@@ -66,11 +68,20 @@ namespace ERPInterface
                         inventDim.field["inventSerialId"] = dim.inventSerialId;
                         //inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                         inventDim = ax.CallStaticClassMethod("WMS_Utility", "Svc_InventDim", pl.ItemId, inventDim);
-                        string inventDimId = inventDim.field["inventDimId"];                         
-                        ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
-                            ,pl.ItemId, inventDimId);
-                        ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
-                            , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
+                        string inventDimId = inventDim.field["inventDimId"];
+                        try
+                        {
+                            ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
+                                , pl.ItemId, inventDimId);
+                            ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_Register"
+                                , pt.PurchId, pl.LineNum, pl.Qty, inventDimId);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(Utility.XmlSerializeToString(pl));
+                            Exception e = new Exception(String.Format("PurchLineNum:'{0}' Error:{1}", pl.LineNum, ex.Message));
+                            throw e;
+                        }
                     }
                     // 3.0 create packingslip parm
                     // DocumentStatus::PackingSlip = 5
@@ -89,10 +100,14 @@ namespace ERPInterface
                     //IAxaptaRecord purchJour = purchFormLetter.Call("journal");
                     //packingslipId = purchJour.field["PackingSlipId"]; 
                     //packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PostPurchPackingSlip", pt.PurchId, pt.PackingSlipId, sessionDate);
-                    packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PostPurchPackingSlip", pt.PurchId, "ReceiveNow", pt.PackingSlipId, sessionDate);
+                    packingslipId = ax.CallStaticClassMethod("WMS_Utility", "Svc_PostPurchPackingSlip", pt.PurchId, "Registered", pt.PackingSlipId, sessionDate);
                     if (packingslipId == "")
                     {
                         throw new Exception("Post Purchase Packing Slip failed!");
+                    }
+                    if (packingslipId != pt.PackingSlipId)
+                    {
+                        throw new Exception(packingslipId);
                     }
                     #endregion
                 }
@@ -109,16 +124,27 @@ namespace ERPInterface
                 Log.Error(ex.StackTrace);
                 Log.Error(input);
                 //roll back
-                ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId);
+                if (isReceive)
+                {
+                    try
+                    {
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId);
+                    }
+                    catch { }
+                }
             }
             finally
             {
                 if (inProcess == "")
                 {
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusRemove", shipmentId);
+                    try
+                    {
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusRemove", shipmentId);
+                    }
+                    catch { }
                 }
-                
-                ax.Logoff();                
+
+                ax.Logoff();
             }
             return Utility.XmlResult(ret, packingslipId);
         }
@@ -528,7 +554,8 @@ namespace ERPInterface
                     catch (Exception ex)
                     {
                         Log.Error(Utility.XmlSerializeToString(sl));
-                        throw ex;
+                        Exception e = new Exception(String.Format("SalesLineId:'{0}' Error:{1}",sl.LineId,ex.Message));
+                        throw e;
                     }
                 }
                 //3.0 SalesPackingSlip
@@ -604,7 +631,7 @@ namespace ERPInterface
                     inventDim = ax.CallStaticRecordMethod("InventDim", "findOrCreate", inventDim);
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_InvBatchPallet_FindOrCreate"
                        , sl.ItemId, inventDim.field["inventDimId"]);
-                    ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_Register",st.SalesId,sl.LineNum,sl.Qty, inventDim.field["inventDimId"]); 
+                    //ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_Register", st.SalesId, sl.LineNum, sl.Qty, inventDim.field["inventDimId"]);
                     //IAxaptaRecord SalesLine = ax.CreateRecord("SalesLine");
                     //SalesLine.ExecuteStmt(string.Format(
                     //    "select forupdate * from %1 where %1.SalesId =='{0}' && %1.LineNum == {1}"
@@ -614,6 +641,15 @@ namespace ERPInterface
                     //SalesLine.field["inventDimId"] = inventDim.field["inventDimId"];
                     //SalesLine.Call("setInventDeliverNow");
                     //SalesLine.DoUpdate();
+                    try
+                    {
+                        ax.CallStaticClassMethod("WMS_Utility", "Svc_SalesCredit_Register", st.SalesId, sl.LineNum, sl.Qty, inventDim.field["inventDimId"]);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(Utility.XmlSerializeToString(sl));
+                        throw ex;
+                    }
                 }
                 ax.TTSCommit();
                 // SalesUpdate::DeliverNow = 0
