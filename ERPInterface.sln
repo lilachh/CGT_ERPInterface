@@ -10,6 +10,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test\test.cspr
 		{ACCF5E77-8511-4FBA-AC4D-136332D157EA} = {ACCF5E77-8511-4FBA-AC4D-136332D157EA}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AX_code", "AX_code", "{655F68D9-A759-4939-B093-792DF8276865}"
+	ProjectSection(SolutionItems) = preProject
+		TestFile\H_WmsInterface_20180101.xpo = TestFile\H_WmsInterface_20180101.xpo
+		TestFile\WMS_Utility_20180101.xpo = TestFile\WMS_Utility_20180101.xpo
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
