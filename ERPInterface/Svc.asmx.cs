@@ -56,6 +56,10 @@ namespace ERPInterface
                     ax.Logon();                    
                     //1.1 Check inprocess
                     inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", shipmentId);
+                    if (inProcess != "")
+                    {
+                        return Utility.XmlResult(inProcess);
+                    }
                     ax.CallStaticClassMethod("WMS_Utility", "Svc_PurchPackingSlip_UnRegister", purchId, sessionDate);
                     // 2.0 update purchline registered
                     foreach (PurchLine pl in pt.LstPurchLine)
@@ -328,6 +332,10 @@ namespace ERPInterface
                 if (description != "")
                 {
                     inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                    if (inProcess != "")
+                    {
+                        return Utility.XmlResult(inProcess);
+                    }
                 }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName","find", "ITrf");
@@ -407,6 +415,10 @@ namespace ERPInterface
             }
             finally
             {
+                if (inProcess == "")
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusRemove", description);
+                }
                 ax.Logoff();
             }
             return Utility.XmlResult(ret, jourId);
@@ -434,6 +446,10 @@ namespace ERPInterface
                 if (description != "")
                 {
                     inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                    if (inProcess != "")
+                    {
+                        return Utility.XmlResult(inProcess);
+                    }
                 }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", jt.MovementType);
@@ -498,6 +514,10 @@ namespace ERPInterface
             }
             finally
             {
+                if (inProcess == "")
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusRemove", description);
+                }
                 ax.Logoff();
             }
             return Utility.XmlResult(ret, jourId);
@@ -698,6 +718,10 @@ namespace ERPInterface
                 if (description != "")
                 {
                     inProcess = ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusCheck", description);
+                    if (inProcess != "")
+                    {
+                        return Utility.XmlResult(inProcess);
+                    }
                 }
                 //1.0 create header
                 IAxaptaRecord inventJournalName = ax.CallStaticRecordMethod("InventJournalName", "find", "ICnt");
@@ -758,6 +782,10 @@ namespace ERPInterface
             }
             finally
             {
+                if (inProcess == "")
+                {
+                    ax.CallStaticClassMethod("WMS_Utility", "Svc_WMSStatusRemove", description);
+                }
                 ax.Logoff();
             }
             return Utility.XmlResult(ret, jourId);
